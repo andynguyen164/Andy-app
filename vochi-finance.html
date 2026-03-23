@@ -68,22 +68,37 @@ body{font-family:'Nunito',sans-serif;color:var(--text);font-size:14px;letter-spa
   position:relative;
 }
 
-/* ── MOBILE: luôn full screen, bỏ phone frame ── */
+/* ── MOBILE: full screen + compact spacing ── */
 @media screen and (max-width:500px){
-  html,body{
-    background:var(--bg);
-    align-items:flex-start;
-    width:100%;height:100%;
-  }
-  #phone{
-    width:100%;
-    height:100vh;          /* fallback */
-    height:100dvh;         /* dynamic — không tính address bar */
-    border-radius:0;
-    box-shadow:none;
-  }
+  html,body{ background:var(--bg);align-items:flex-start;width:100%;height:100%; }
+  #phone{ width:100%;height:100vh;height:100dvh;border-radius:0;box-shadow:none; }
+  /* Compact sections */
+  .dash-hero{padding:48px 18px 14px;}
+  .greet{font-size:22px;}
+  .greet-sub{font-size:12px;margin-bottom:12px;}
+  .balance-card{padding:16px 16px 14px;}
+  .bc-amount{font-size:26px;margin-bottom:10px;}
+  .bc-item{padding:8px 8px 6px;}
+  .bc-item-val{font-size:13px;}
+  .stats-row{padding:8px 16px 0;gap:8px;}
+  .stat-card{padding:10px 12px;}
+  .sc-val{font-size:18px;}
+  .sc-sub{font-size:10px;}
+  .ai-card{margin:8px 16px 0;padding:10px 12px;}
+  .ai-txt{font-size:11px;}
+  .sec-hdr{padding:10px 18px 6px;}
+  .txn-list{padding:0 16px;}
+  .txn-item{padding:10px 12px;}
+  .txn-icon{width:36px;height:36px;font-size:15px;border-radius:12px;}
+  #voice-bar{padding:6px 16px;padding-bottom:calc(6px + env(safe-area-inset-bottom));}
+  #voice-status{font-size:10px;min-height:14px;margin-bottom:6px;}
+  #mic-btn{width:44px;height:44px;font-size:18px;}
+  #send-btn{width:40px;height:40px;}
+  #bottom-nav{padding:0 8px;padding-bottom:calc(16px + env(safe-area-inset-bottom));}
+  .nav-icon{width:36px;height:36px;font-size:16px;}
+  .nav-label{font-size:9px;}
 }
-/* iOS Safari fallback — không hỗ trợ dvh */
+/* iOS Safari fallback */
 @supports (-webkit-touch-callout:none){
   @media screen and (max-width:500px){
     html{ height:-webkit-fill-available; }
@@ -567,79 +582,98 @@ function playSound(type) {
 }
 
 // ─── SPEECH ──────────────────────────────────────────────────────────────────
-let listening = false, recog = null;
-let _voiceFinalText = '';
+// Safari iOS quirks:
+// 1. Tạo instance mới mỗi lần — KHÔNG tái sử dụng
+// 2. KHÔNG abort() instance cũ trước khi tạo mới (gây onend chạy muộn và null instance mới)
+// 3. Xử lý text ngay trong onresult isFinal, không chờ onend
+// 4. Dùng version ID để tránh stale closures
+
+let listening = false;
+let _recogVersion = 0; // tăng mỗi lần tạo instance mới, tránh stale onend
 
 function toggleMic() {
   if (listening) { stopListening(); return; }
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) { toast('⚠️ Hãy mở bằng Chrome hoặc Safari'); return; }
 
-  // Luôn tạo instance mới — iOS Safari yêu cầu điều này
-  recog = null;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { toast('⚠️ Trình duyệt không hỗ trợ giọng nói'); return; }
+
+  // Tăng version — các handler cũ sẽ tự bỏ qua nhờ version check
+  const myVersion = ++_recogVersion;
+  let didProcess = false;
+
+  const recog = new SR();
+  recog.lang = 'vi-VN';
+  recog.continuous = false;
+  recog.interimResults = true;
+  recog.maxAlternatives = 1;
+
+  recog.onstart = () => {
+    if (myVersion !== _recogVersion) return;
+    listening = true;
+    setMicState('listening');
+    setStatus('🔴 Đang nghe...');
+    document.getElementById('waveform-container').classList.add('visible');
+  };
+
+  recog.onresult = (e) => {
+    if (myVersion !== _recogVersion) return;
+    let interim = '', finalTxt = '';
+    for (let i = 0; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) finalTxt += t;
+      else interim += t;
+    }
+    const display = finalTxt || interim;
+    document.getElementById('voice-input-box').value = display;
+
+    // Xử lý ngay khi isFinal — không chờ onend (Safari iOS fire onend trước onresult)
+    if (finalTxt && !didProcess) {
+      didProcess = true;
+      resetMicUI();
+      processInput();
+    }
+  };
+
+  recog.onerror = (e) => {
+    if (myVersion !== _recogVersion) return;
+    console.log('Speech error:', e.error);
+    if (e.error !== 'no-speech' && e.error !== 'aborted') {
+      toast('⚠️ Lỗi mic: ' + e.error);
+    }
+    resetMicUI();
+  };
+
+  recog.onend = () => {
+    if (myVersion !== _recogVersion) return;
+    // Fallback: nếu onend chạy trước onresult và đã có text
+    const txt = document.getElementById('voice-input-box').value.trim();
+    if (!didProcess && txt) {
+      didProcess = true;
+      processInput();
+    }
+    resetMicUI();
+  };
 
   try {
-    recog = new SR();
-    recog.lang = 'vi-VN';
-    recog.continuous = false;
-    recog.interimResults = true;
-    _voiceFinalText = '';
-
-    recog.onstart = () => {
-      listening = true;
-      setMicState('listening');
-      setStatus('🔴 Đang nghe...');
-      document.getElementById('waveform-container').classList.add('visible');
-    };
-
-    recog.onresult = (e) => {
-      const txt = Array.from(e.results).map(r => r[0].transcript).join('');
-      document.getElementById('voice-input-box').value = txt;
-      if (e.results[e.results.length - 1].isFinal) {
-        _voiceFinalText = txt; // lưu lại, xử lý trong onend
-      }
-    };
-
-    recog.onerror = (e) => {
-      console.log('recog error:', e.error);
-      listening = false;
-      recog = null;
-      setMicState('idle');
-      setStatus('Nhấn 🎤 để nói hoặc gõ lệnh bên dưới');
-      document.getElementById('waveform-container').classList.remove('visible');
-    };
-
-    recog.onend = () => {
-      listening = false;
-      recog = null; // release hoàn toàn — iOS Safari cần điều này
-      setMicState('idle');
-      setStatus('Nhấn 🎤 để nói hoặc gõ lệnh bên dưới');
-      document.getElementById('waveform-container').classList.remove('visible');
-      // Xử lý sau khi recognition kết thúc hẳn
-      if (_voiceFinalText) {
-        document.getElementById('voice-input-box').value = _voiceFinalText;
-        _voiceFinalText = '';
-        setTimeout(() => processInput(), 100);
-      }
-    };
-
     recog.start();
   } catch(e) {
-    console.error('recog start error:', e);
-    recog = null;
+    console.error('Cannot start:', e);
+    _recogVersion++; // invalidate
     toast('⚠️ Không thể khởi động mic');
   }
 }
 
-function stopListening() {
+function resetMicUI() {
   listening = false;
-  if (recog) {
-    try { recog.abort(); } catch(e){} // abort() nhanh hơn stop() trên iOS
-    // onend sẽ tự set recog = null
-  }
   setMicState('idle');
   setStatus('Nhấn 🎤 để nói hoặc gõ lệnh bên dưới');
   document.getElementById('waveform-container').classList.remove('visible');
+}
+
+function stopListening() {
+  // Invalidate version ngay lập tức — các handler đang chạy sẽ bị bỏ qua
+  _recogVersion++;
+  resetMicUI();
 }
 
 function setMicState(state) {
