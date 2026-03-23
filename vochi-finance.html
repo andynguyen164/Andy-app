@@ -444,7 +444,7 @@ function renderCalendar() {
     div.className = "day " + (hasData ? "has-data" : "");
     div.innerText = d;
 
-    div.onclick = () => filterByDate(date);
+    div.onclick = function() {   filterByDate(date); };
 
     container.appendChild(div);
   }
@@ -453,6 +453,29 @@ function renderCalendar() {
 function changeMonth(offset){
   currentMonth.setMonth(currentMonth.getMonth() + offset);
   renderCalendar();
+}
+function filterByDate(date) {
+  const txns = D.txns.filter(t => {
+    return new Date(t.ts).toDateString() === date.toDateString();
+  });
+
+  // bỏ highlight cũ
+  document.querySelectorAll('.day').forEach(d => d.classList.remove('active'));
+
+  // highlight ngày vừa click
+  const clicked = Array.from(document.querySelectorAll('.day'))
+    .find(el => parseInt(el.innerText) === date.getDate());
+
+  if(clicked) clicked.classList.add('active');
+
+  // render list giao dịch
+  if(txns.length){
+    document.getElementById("all-txn-list").innerHTML =
+      txns.map(txnHTML).join("");
+  } else {
+    document.getElementById("all-txn-list").innerHTML =
+      "<div class='empty-msg'>Không có giao dịch ngày này</div>";
+  }
 }
 // Greeting
 function setGreeting(){const h=new Date().getHours();document.getElementById('greet-text').textContent=h<12?'Chào buổi sáng ☀️':h<18?'Buổi chiều vui vẻ 🌤':'Buổi tối bình yên 🌙';}
