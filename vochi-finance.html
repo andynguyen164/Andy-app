@@ -11,6 +11,30 @@
 <title>DuVochi — Voice Finance</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
+#calendar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  padding: 12px 20px;
+}
+
+.day {
+  background: white;
+  border-radius: 10px;
+  padding: 8px;
+  text-align: center;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.day.active {
+  background: #4CAF82;
+  color: white;
+}
+
+.day.has-data {
+  border: 2px solid #4CAF82;
+}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
   --mint:#4CAF82;--mint2:#3a9e72;--mint-light:#e8f5ee;--mint-xlight:#f4fbf7;
@@ -264,6 +288,7 @@ body{font-family:'Nunito',sans-serif;color:var(--text);font-size:14px;letter-spa
       <div class="txn-page-top">
         <div class="page-title">Giao dịch</div>
         <div class="filter-bar">
+          <div id="calendar"></div>
           <button class="filter-btn active" onclick="setFilter('all')">Tất cả</button>
           <button class="filter-btn" onclick="setFilter('today')">Hôm nay</button>
           <button class="filter-btn" onclick="setFilter('week')">Tuần này</button>
@@ -344,6 +369,48 @@ body{font-family:'Nunito',sans-serif;color:var(--text);font-size:14px;letter-spa
 </div>
 
 <script>
+function renderCalendar() {
+  const container = document.getElementById("calendar");
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const totalDays = new Date(year, month + 1, 0).getDate();
+
+  container.innerHTML = "";
+
+  for (let i = 0; i < firstDay; i++) {
+    container.innerHTML += "<div></div>";
+  }
+
+  for (let d = 1; d <= totalDays; d++) {
+    const date = new Date(year, month, d);
+
+    const hasData = D.txns.some(t => {
+      const td = new Date(t.ts);
+      return td.toDateString() === date.toDateString();
+    });
+
+    const div = document.createElement("div");
+    div.className = "day " + (hasData ? "has-data" : "");
+    div.innerText = d;
+
+    div.onclick = () => filterByDate(date);
+
+    container.appendChild(div);
+  }
+}
+function filterByDate(date) {
+  const txns = D.txns.filter(t => {
+    return new Date(t.ts).toDateString() === date.toDateString();
+  });
+
+  document.getElementById("all-txn-list").innerHTML =
+    txns.length
+      ? txns.map(txnHTML).join("")
+      : "<div class='empty-msg'>Không có giao dịch</div>";
+}
 const D={txns:[],savings:[{id:1,name:'Tiết kiệm chung',emoji:'💰',target:0,current:0},{id:2,name:'Quỹ du lịch',emoji:'✈️',target:20000000,current:0},{id:3,name:'Quỹ khẩn cấp',emoji:'🛡️',target:50000000,current:0}],cats:[{id:1,name:'Ăn uống',emoji:'🍜'},{id:2,name:'Di chuyển',emoji:'🚗'},{id:3,name:'Mua sắm',emoji:'🛒'},{id:4,name:'Sức khoẻ',emoji:'💊'},{id:5,name:'Giải trí',emoji:'🎮'},{id:6,name:'Hoá đơn',emoji:'🧾'},{id:7,name:'Học tập',emoji:'📚'},{id:8,name:'Khác',emoji:'📌'}],kw:{exp:['spend','chi'],inc:['income','thu'],sav:['save','tiết kiệm']},learned:{},nextId:100,nextSavId:10};
 function load(){try{const s=localStorage.getItem('vochi2');if(s){const p=JSON.parse(s);Object.assign(D,p);}}catch(e){}}
 function persist(){try{localStorage.setItem('vochi2',JSON.stringify(D));}catch(e){}}
@@ -422,7 +489,7 @@ function clearAllData(){if(!confirm('Xoá toàn bộ giao dịch và dữ liệu
 function updateAI(txns,income,expense,saving){const el=document.getElementById('ai-text');if(!txns.length){el.textContent='Thêm giao dịch đầu tiên để nhận nhận xét cá nhân hoá.';return;}const ratio=income?expense/income:0;const learned=Object.keys(D.learned).length;const pool=[income&&ratio>0.8?`Bạn đã chi ${Math.round(ratio*100)}% thu nhập. Hãy tiết kiệm thêm!`:null,income&&saving?`Tốt lắm! Bạn đang tiết kiệm ${Math.round(saving/income*100)}% thu nhập.`:null,learned>2?`AI đã học ${learned} mẫu — tự phân loại ngày càng chính xác.`:null,txns.length>=5?`${txns.length} giao dịch đã ghi. Thói quen chi tiêu đang được theo dõi tốt.`:null,'Thử: "save 500k" để phân bổ vào mục tiêu tiết kiệm.'].filter(Boolean);el.textContent=pool[Math.floor(Math.random()*pool.length)];}
 
 // Tabs
-function showTab(name){['dashboard','transactions','savings','settings'].forEach(t=>{document.getElementById('panel-'+t).classList.toggle('active',t===name);document.getElementById('nav-'+t)?.classList.toggle('active',t===name);});if(name==='dashboard')renderDashboard();if(name==='transactions')renderAllTxns();if(name==='savings')renderSavings();if(name==='settings')renderSettings();}
+function showTab(name){['dashboard','transactions','savings','settings'].forEach(t=>{document.getElementById('panel-'+t).classList.toggle('active',t===name);document.getElementById('nav-'+t)?.classList.toggle('active',t===name);});if(name==='dashboard')renderDashboard();if(name==='transactions')renderAllTxns();renderCalendar();if(name==='savings')renderSavings();if(name==='settings')renderSettings();}
 
 // Toast
 let toastTimer=null;
