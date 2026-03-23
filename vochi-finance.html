@@ -296,34 +296,47 @@ body{font-family:'Nunito',sans-serif;color:var(--text);font-size:14px;letter-spa
     </div>
 
     <!-- TRANSACTIONS -->
-    <div id="panel-transactions" class="panel">
-      <div class="txn-page-top">
-        <div class="page-title">Giao dịch</div>
-        <div class="filter-bar">
-          <div style="padding: 10px 20px;">   <button onclick="toggleCalendar()" style="
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: white;
-  border: 1px solid #ddd;
-  padding: 8px 12px;
-  border-radius: 12px;
-  font-weight: 600;
-">
-  <img src="calendar.png" style="width:20px;height:20px;">
-  Lịch
-</button> </div>  <div id="calendar-wrapper" style="display:none;">   <div id="calendar-header"></div>   <div id="calendar"></div> </div>
-          <button class="filter-btn active" onclick="setFilter('all')">Tất cả</button>
-          <button class="filter-btn" onclick="setFilter('today')">Hôm nay</button>
-          <button class="filter-btn" onclick="setFilter('week')">Tuần này</button>
-          <button class="filter-btn" onclick="setFilter('month')">Tháng này</button>
-          <button class="filter-btn" onclick="setFilter('last_month')">Tháng trước</button>
-        </div>
-      </div>
-      <div class="period-summary" id="period-summary" style="display:none"></div>
-      <div id="all-txn-list" class="txn-list" style="padding-top:10px"></div>
-      <div style="height:12px"></div>
+<div id="panel-transactions" class="panel">
+  <div class="txn-page-top">
+    <div class="page-title">Giao dịch</div>
+
+    <!-- 🔹 BUTTON CALENDAR -->
+    <div style="padding: 10px 20px;">
+      <button onclick="toggleCalendar()" style="
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: white;
+        border: 1px solid #ddd;
+        padding: 8px 12px;
+        border-radius: 12px;
+        font-weight: 600;
+      ">
+        <img src="calendar.png" style="width:20px;height:20px;">
+        Lịch
+      </button>
     </div>
+
+    <!-- 🔹 CALENDAR -->
+    <div id="calendar-wrapper" style="display:none;">
+      <div id="calendar-header"></div>
+      <div id="calendar"></div>
+    </div>
+
+    <!-- 🔹 FILTER (GIỮ NGUYÊN) -->
+    <div class="filter-bar">
+      <button class="filter-btn active" onclick="setFilter('all')">Tất cả</button>
+      <button class="filter-btn" onclick="setFilter('today')">Hôm nay</button>
+      <button class="filter-btn" onclick="setFilter('week')">Tuần này</button>
+      <button class="filter-btn" onclick="setFilter('month')">Tháng này</button>
+      <button class="filter-btn" onclick="setFilter('last_month')">Tháng trước</button>
+    </div>
+  </div>
+
+  <div class="period-summary" id="period-summary" style="display:none"></div>
+  <div id="all-txn-list" class="txn-list" style="padding-top:10px"></div>
+  <div style="height:12px"></div>
+</div>
 
     <!-- SAVINGS -->
     <div id="panel-savings" class="panel">
@@ -534,7 +547,7 @@ function closeSheet(){document.getElementById('overlay').classList.remove('visib
 function overlayTap(e){if(e.target===document.getElementById('overlay'))closeSheet();}
 
 // Data
-function addTxn(data){   const txn = {...data, id: D.nextId++, ts: Date.now()};   D.txns.unshift(txn);    // 🔊 play sound   playSound(data.type);    persist();   renderDashboard();   renderAllTxns(); }
+function addTxn(data){   const txn = {     ...data,     id: D.nextId++,     ts: Date.now()   };    D.txns.unshift(txn);    playSound(data.type);    persist();   renderDashboard();   renderAllTxns(); }
 function getCat(id){return D.cats.find(c=>c.id===id)||{name:'Khác',emoji:'📌'};}
 function txnHTML(t){const cat=t.cat?getCat(t.cat):null;const icon=t.type==='income'?'💚':t.type==='saving'?'🟡':(cat?cat.emoji:'📌');const iconBg=t.type==='income'?'background:var(--mint-light)':t.type==='saving'?'background:var(--amber-light)':'background:var(--bg)';const color=t.type==='income'?'var(--mint2)':t.type==='saving'?'var(--amber)':'var(--red)';const sign=t.type==='income'?'+':'-';const catTag=cat?`<span class="cat-tag">${cat.name}</span>`:'';return `<div class="txn-wrap" id="wrap-${t.id}"><div class="txn-delete-bg"><span style="font-size:20px">🗑️</span></div><div class="txn-item" id="txn-${t.id}"><div class="txn-icon" style="${iconBg}">${icon}</div><div class="txn-body"><div class="txn-desc">${t.desc}</div><div class="txn-meta">${fmtDate(t.ts)} ${catTag}</div></div><div class="txn-amt" style="color:${color}">${sign}${fmt(t.amount)}</div><button class="del-btn" onclick="deleteTxn(${t.id},event)">✕</button></div></div>`;}
 function deleteTxn(id,e){if(e)e.stopPropagation();const txn=D.txns.find(t=>t.id===id);if(!txn)return;if(txn.type==='saving'&&txn.bucketId){const g=D.savings.find(s=>s.id===txn.bucketId);if(g)g.current=Math.max(0,g.current-txn.amount);}const el=document.getElementById('txn-'+id);if(el){el.classList.add('deleting');setTimeout(()=>{D.txns=D.txns.filter(t=>t.id!==id);persist();renderDashboard();renderAllTxns();renderSavings();toast('🗑️ Đã xoá giao dịch');},280);}else{D.txns=D.txns.filter(t=>t.id!==id);persist();renderDashboard();renderAllTxns();renderSavings();toast('🗑️ Đã xoá giao dịch');}}
