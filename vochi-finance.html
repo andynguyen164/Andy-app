@@ -300,7 +300,19 @@ body{font-family:'Nunito',sans-serif;color:var(--text);font-size:14px;letter-spa
       <div class="txn-page-top">
         <div class="page-title">Giao dịch</div>
         <div class="filter-bar">
-          <div style="padding: 10px 20px;">   <button onclick="toggleCalendar()" style="     background: white;     border: 1px solid #ddd;     padding: 8px 12px;     border-radius: 12px;     font-weight: 600;   ">     📅 Xem theo ngày   </button> </div>  <div id="calendar-wrapper" style="display:none;">   <div id="calendar-header"></div>   <div id="calendar"></div> </div>
+          <div style="padding: 10px 20px;">   <button onclick="toggleCalendar()" style="
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  border: 1px solid #ddd;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-weight: 600;
+">
+  <img src="calendar.png" style="width:20px;height:20px;">
+  Xem theo ngày
+</button> </div>  <div id="calendar-wrapper" style="display:none;">   <div id="calendar-header"></div>   <div id="calendar"></div> </div>
           <button class="filter-btn active" onclick="setFilter('all')">Tất cả</button>
           <button class="filter-btn" onclick="setFilter('today')">Hôm nay</button>
           <button class="filter-btn" onclick="setFilter('week')">Tuần này</button>
