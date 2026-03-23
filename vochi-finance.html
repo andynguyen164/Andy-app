@@ -518,10 +518,70 @@ function guessCategory(desc){const d=desc.toLowerCase();if(D.learned[d])return D
 
 // Speech
 let listening=false,recog=null;
-function toggleMic(){if(listening){stopListening();return;}const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){toast('⚠️ Hãy mở file này bằng Chrome');return;}recog=new SR();recog.lang='vi-VN';recog.continuous=false;recog.interimResults=true;recog.maxAlternatives=3;recog.onstart=()=>{listening=true;setMicState('listening');setStatus('🔴 Đang nghe... Nói đi!','var(--red)');document.getElementById('waveform-container').classList.add('visible');};recog.onresult=(e)=>{const txt=Array.from(e.results).map(r=>r[0].transcript).join('');document.getElementById('voice-input-box').value=txt;if(e.results[e.results.length-1].isFinal){stopListening();processInput();}};recog.onerror=(e)=>{stopListening();if(e.error==='not-allowed')toast('❌ Chưa cấp quyền microphone');else if(e.error==='no-speech')toast('Không nghe thấy gì. Thử lại!');else toast('Lỗi: '+e.error);};recog.onend=()=>{if(listening)stopListening();};try{recog.start();}catch(e){toast('Không thể bắt đầu nhận dạng.');}}
-function stopListening(){listening=false;if(recog){try{recog.stop();}catch(e){}}setMicState('idle');setStatus('Nhấn 🎤 để nói hoặc gõ lệnh bên dưới');document.getElementById('waveform-container').classList.remove('visible');}
-function setMicState(s){const b=document.getElementById('mic-btn');b.classList.remove('listening','processing');if(s==='listening'){b.classList.add('listening');b.textContent='🛑';}else if(s==='processing'){b.classList.add('processing');b.textContent='⏳';}else{b.textContent='🎤';}}
-function setStatus(msg,color){const el=document.getElementById('voice-status');el.textContent=msg;el.style.color=color||'var(--text3)';}
+function toggleMic(){
+  if(listening){
+    stopListening();
+    return;
+  }
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){
+    toast('⚠️ Hãy mở bằng Chrome');
+    return;
+  }
+
+  try {
+    recog = new SR();
+    recog.lang = 'vi-VN';
+    recog.continuous = false;
+    recog.interimResults = true;
+
+    recog.onstart = () => {
+      listening = true;
+      setMicState('listening');
+      setStatus('🔴 Đang nghe...');
+      document.getElementById('waveform-container').classList.add('visible');
+    };
+
+    recog.onresult = (e) => {
+      const txt = Array.from(e.results).map(r => r[0].transcript).join('');
+      document.getElementById('voice-input-box').value = txt;
+
+      if(e.results[e.results.length - 1].isFinal){
+        stopListening();
+        processInput();
+      }
+    };
+
+    recog.onerror = (e) => {
+      stopListening();
+      console.log(e.error);
+    };
+
+    recog.onend = () => {
+      listening = false;
+      setMicState('idle');
+    };
+
+    recog.start();
+
+  } catch(e){
+    console.log(e);
+  }
+}
+
+function stopListening(){
+  listening = false;
+
+  if(recog){
+    try{ recog.stop(); } catch(e){}
+    recog = null; // 🔥 QUAN TRỌNG
+  }
+
+  setMicState('idle');
+  setStatus('Nhấn 🎤 để nói...');
+  document.getElementById('waveform-container').classList.remove('visible');
+}
 
 // Process
 let _processing=false;
