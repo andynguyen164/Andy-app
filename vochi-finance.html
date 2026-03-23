@@ -57,88 +57,59 @@
   --r12:12px;--r16:16px;--r20:20px;--r28:28px;--r36:36px;--r44:44px;
   --font-xs:10px;--font-sm:12px;--font-base:13px;--font-md:14px;--font-lg:16px;
 }
-/* ── BASE (desktop) ── */
-html,body{margin:0;padding:0;background:#c8dfc8;}
-body{
-  font-family:'Nunito',sans-serif;color:var(--text);font-size:14px;letter-spacing:.1px;
-}
-/* Desktop: center phone frame */
-@media screen and (min-width:501px){
-  html,body{height:100%;overflow:hidden;display:flex;justify-content:center;align-items:center;}
+/* ── BASE ── */
+html,body{
+  margin:0;padding:0;
+  width:100%;height:100%;
+  font-family:'Nunito',sans-serif;
+  color:var(--text);font-size:14px;letter-spacing:.1px;
 }
 
-/* PHONE — desktop preview frame */
-#phone{
-  display:flex;flex-direction:column;
-  background:var(--bg);position:relative;overflow:hidden;
-}
+/* ── DESKTOP: phone frame giữa màn hình ── */
 @media screen and (min-width:501px){
+  html,body{
+    background:#c8dfc8;
+    overflow:hidden;
+    display:flex;justify-content:center;align-items:center;
+  }
   #phone{
-    width:390px;height:844px;
+    width:390px;height:844px;flex-shrink:0;
     border-radius:52px;
     box-shadow:0 0 0 10px #a8c8a8,0 50px 120px rgba(0,0,0,.3);
   }
 }
 
-/* ── MOBILE: phone card với padding xung quanh ── */
+/* ── MOBILE: full screen sạch sẽ ── */
 @media screen and (max-width:500px){
   html{
     height:100%;
     height:100dvh;
-    background:#b8d4b8;
+    background:var(--bg);
   }
   body{
-    width:100%;
     height:100%;
     height:100dvh;
-    overflow:hidden;          /* body không scroll — chỉ #main scroll */
-    background:#b8d4b8;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:16px 14px;
-    box-sizing:border-box;
+    overflow:hidden;
+    background:var(--bg);
   }
   #phone{
     width:100%;
-    max-width:390px;
-    /* Điền hết chiều cao trừ padding body (32px trên+dưới) */
-    height:calc(100dvh - 32px);
-    height:calc(100vh - 32px);
-    border-radius:34px;
-    box-shadow:
-      0 0 0 5px rgba(255,255,255,.22),
-      0 20px 48px rgba(0,0,0,.22),
-      0 6px 14px rgba(0,0,0,.1);
-    overflow:hidden;
-    flex-shrink:0;
-  }
-  #main{
-    -webkit-overflow-scrolling:touch;
+    height:100%;
+    height:100dvh;
+    border-radius:0;
+    box-shadow:none;
   }
 }
+/* iOS Safari */
 @supports (-webkit-touch-callout:none){
   @media screen and (max-width:500px){
     html,body{ height:-webkit-fill-available; }
-    #phone{ height:calc(-webkit-fill-available - 32px); }
+    #phone{ height:-webkit-fill-available; }
   }
 }
 
-/* ── STANDALONE (Add to Home Screen) ── */
-/* Khi chạy như PWA, không có address bar → dùng 100% chiều cao thật */
-@media all and (display-mode: standalone){
-  html,body{ height:100%;background:var(--bg); }
-  #phone{ height:100%;height:100dvh;width:100%;border-radius:0;box-shadow:none; }
-  /* Voice bar và bottom nav sát đáy hơn */
-  #voice-bar{
-    padding:8px 16px;
-    padding-bottom:calc(8px + env(safe-area-inset-bottom));
-  }
-  #bottom-nav{
-    padding:0 8px;
-    padding-bottom:calc(20px + env(safe-area-inset-bottom));
-  }
-}
+/* PHONE base */
+#phone{display:flex;flex-direction:column;background:var(--bg);position:relative;overflow:hidden;}
 
 /* SCROLL */
 #main{flex:1;overflow-y:auto;background:var(--bg);scrollbar-width:none}
