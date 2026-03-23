@@ -69,42 +69,40 @@ body{font-family:'Nunito',sans-serif;color:var(--text);font-size:14px;letter-spa
   position:relative;
 }
 
-/* ── MOBILE: full screen + compact spacing ── */
+/* ── MOBILE: phone card — không full screen, có padding xung quanh ── */
 @media screen and (max-width:500px){
-  html,body{ background:var(--bg);align-items:flex-start;width:100%;height:100%; }
-  #phone{ width:100%;height:100vh;height:100dvh;border-radius:0;box-shadow:none; }
-  /* Compact sections */
-  .dash-hero{padding:48px 18px 14px;}
-  .greet{font-size:22px;}
-  .greet-sub{font-size:12px;margin-bottom:12px;}
-  .balance-card{padding:16px 16px 14px;}
-  .bc-amount{font-size:26px;margin-bottom:10px;}
-  .bc-item{padding:8px 8px 6px;}
-  .bc-item-val{font-size:13px;}
-  .stats-row{padding:8px 16px 0;gap:8px;}
-  .stat-card{padding:10px 12px;}
-  .sc-val{font-size:18px;}
-  .sc-sub{font-size:10px;}
-  .ai-card{margin:8px 16px 0;padding:10px 12px;}
-  .ai-txt{font-size:11px;}
-  .sec-hdr{padding:10px 18px 6px;}
-  .txn-list{padding:0 16px;}
-  .txn-item{padding:10px 12px;}
-  .txn-icon{width:36px;height:36px;font-size:15px;border-radius:12px;}
-  #voice-bar{padding:6px 16px;padding-bottom:calc(6px + env(safe-area-inset-bottom));}
-  #voice-status{font-size:10px;min-height:14px;margin-bottom:6px;}
-  #mic-btn{width:44px;height:44px;font-size:18px;}
-  #send-btn{width:40px;height:40px;}
-  #bottom-nav{padding:0 8px;padding-bottom:calc(16px + env(safe-area-inset-bottom));}
-  .nav-icon{width:36px;height:36px;font-size:16px;}
-  .nav-label{font-size:9px;}
+  html,body{
+    background:#b8d4b8;
+    align-items:center;
+    justify-content:center;
+    width:100%;
+    height:100%;
+    height:100dvh;
+    overflow:hidden;
+  }
+  #phone{
+    /* Chiếm 94% chiều rộng màn hình, tối đa 400px */
+    width:min(94vw, 400px);
+    /* Chiếm 92% chiều cao, tối đa 860px — có khoảng thở trên dưới */
+    height:min(92dvh, 860px);
+    height:min(92vh, 860px);
+    border-radius:36px;
+    box-shadow:
+      0 0 0 6px rgba(255,255,255,.25),
+      0 24px 60px rgba(0,0,0,.22),
+      0 8px 20px rgba(0,0,0,.12);
+    overflow:hidden;
+  }
 }
 /* iOS Safari fallback */
 @supports (-webkit-touch-callout:none){
   @media screen and (max-width:500px){
     html{ height:-webkit-fill-available; }
-    body{ min-height:-webkit-fill-available; }
-    #phone{ height:-webkit-fill-available; }
+    body{ height:-webkit-fill-available; }
+    #phone{
+      height:min(92%, 860px);
+      border-radius:36px;
+    }
   }
 }
 
