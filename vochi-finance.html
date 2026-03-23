@@ -176,10 +176,17 @@ html,body{
 /* ── BOTTOM NAV ── */
 #bottom-nav{
   display:flex;align-items:center;
-  padding:4px 8px;
-  padding-bottom:calc(24px + env(safe-area-inset-bottom));
+  padding:6px 8px 0;
+  /* safe-area-inset-bottom = ~34px trên iPhone có notch, 0 trên máy khác */
+  padding-bottom:calc(env(safe-area-inset-bottom) + 12px);
   background:var(--white);flex-shrink:0;
   box-shadow:0 -1px 0 var(--border);
+}
+/* Mobile: đảm bảo đủ khoảng cách với home indicator */
+@media screen and (max-width:500px){
+  #bottom-nav{
+    padding-bottom:calc(env(safe-area-inset-bottom) + 16px);
+  }
 }
 .nav-item{
   flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;
@@ -232,6 +239,12 @@ html,body{
 
 /* DASHBOARD */
 .dash-hero{background:var(--white);padding:52px 24px 24px;border-radius:0 0 var(--r44) var(--r44);box-shadow:var(--shadow2);margin-bottom:0}
+@media screen and (max-width:500px){
+  .dash-hero{padding-top:max(52px, calc(env(safe-area-inset-top) + 16px));}
+  .txn-page-top{padding-top:max(52px, calc(env(safe-area-inset-top) + 16px));}
+  .sav-hero{padding-top:max(52px, calc(env(safe-area-inset-top) + 16px));}
+  .settings-hero{padding-top:max(52px, calc(env(safe-area-inset-top) + 16px));}
+}
 .greet{font-family:'Nunito',sans-serif;font-size:26px;font-weight:900;color:var(--dark);line-height:1.15;margin-bottom:4px;letter-spacing:-.3px}
 .greet-sub{font-size:12px;color:var(--text3);font-weight:500;margin-bottom:18px;letter-spacing:.1px}
 .balance-card{background:linear-gradient(140deg,var(--mint) 0%,#2d8a5e 100%);border-radius:var(--r28);padding:22px 22px 18px;position:relative;overflow:hidden}
