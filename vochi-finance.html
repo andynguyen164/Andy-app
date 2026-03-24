@@ -902,31 +902,34 @@ function setStatus(msg, color) {
 }
 
 // ─── PROCESS ─────────────────────────────────────────────────────────────────
+// KHÔNG dùng setTimeout — iOS Safari mất user gesture context sau async
 let _processing = false;
 function processInput() {
   const raw = document.getElementById('voice-input-box').value.trim();
   if (!raw || _processing) return;
   _processing = true;
-  setMicState('processing');
-  setStatus('✦ Đang phân tích...', 'var(--mint)');
-  setTimeout(() => {
-    setMicState('idle');
-    setStatus('Nhấn 🎤 để nói hoặc gõ lệnh bên dưới');
-    const intent = detectIntent(raw), amount = parseAmt(raw), desc = extractDesc(raw);
-    _processing = false;
-    if (!amount) { toast('❌ Không tìm thấy số tiền. VD: "spend 40k ăn sáng"'); return; }
-    if (intent === 'income') {
-      addTxn({type:'income', amount, desc, cat:null});
-      document.getElementById('voice-input-box').value = '';
-      toast('✅ Thu nhập +' + fmt(amount) + ' đã lưu!');
-    } else if (intent === 'saving') {
-      document.getElementById('voice-input-box').value = '';
-      showSavingSheet(amount, desc);
-    } else {
-      document.getElementById('voice-input-box').value = '';
-      showCatSheet(amount, desc);
-    }
-  }, 500);
+
+  const intent = detectIntent(raw);
+  const amount = parseAmt(raw);
+  const desc = extractDesc(raw);
+  _processing = false;
+
+  if (!amount) {
+    toast('❌ Không tìm thấy số tiền. VD: "chi 40k ăn sáng"');
+    return;
+  }
+
+  document.getElementById('voice-input-box').value = '';
+  setStatus('Nhấn 🎤 để nói hoặc gõ lệnh bên dưới');
+
+  if (intent === 'income') {
+    addTxn({type:'income', amount, desc, cat:null});
+    toast('✅ Thu nhập +' + fmt(amount) + ' đã lưu!');
+  } else if (intent === 'saving') {
+    showSavingSheet(amount, desc);
+  } else {
+    showCatSheet(amount, desc);
+  }
 }
 
 // ─── SHEETS ──────────────────────────────────────────────────────────────────
