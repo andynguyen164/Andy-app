@@ -375,6 +375,48 @@ html.standalone #bottom-nav{
 /* TOAST */
 #toast{position:absolute;top:70px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--dark);border-radius:var(--r20);padding:12px 22px;font-size:13px;font-weight:700;color:#fff;white-space:nowrap;z-index:200;transition:all .3s cubic-bezier(.4,0,.2,1);opacity:0;pointer-events:none;max-width:300px;text-align:center;box-shadow:0 10px 30px rgba(26,46,34,.35)}
 #toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+/* ─────────────────────────────
+   STATS / ANALYTICS
+───────────────────────────── */
+.stats-hero{background:linear-gradient(150deg,#2d8a5e 0%,var(--mint) 100%);padding:52px 24px 24px;border-radius:0 0 var(--r44) var(--r44);}
+@media screen and (max-width:500px){
+  .stats-hero{padding-top:max(52px,calc(env(safe-area-inset-top)+16px));}
+}
+.stats-hero-lbl{font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,.65);margin-bottom:6px}
+.stats-hero-amt{font-family:'Nunito',sans-serif;font-size:34px;font-weight:900;color:#fff;letter-spacing:-1.5px;margin-bottom:2px}
+.stats-hero-sub{font-size:12px;color:rgba(255,255,255,.7);font-weight:600;margin-bottom:18px}
+.stats-period-bar{display:flex;gap:6px;}
+.stats-period-btn{font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;border:1.5px solid rgba(255,255,255,.3);background:transparent;color:rgba(255,255,255,.75);cursor:pointer;font-family:'Nunito',sans-serif;transition:all .15s}
+.stats-period-btn.active{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.6);color:#fff}
+
+.chart-section{margin:14px 20px 0;background:var(--white);border-radius:var(--r20);padding:16px 18px;box-shadow:var(--shadow)}
+.chart-title{font-size:11px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);margin-bottom:14px}
+.donut-wrap{display:flex;align-items:center;gap:16px;margin-bottom:4px}
+#donut-canvas{flex-shrink:0}
+.donut-legend{flex:1;display:flex;flex-direction:column;gap:7px}
+.legend-item{display:flex;align-items:center;gap:8px;cursor:pointer}
+.legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.legend-name{font-size:12px;font-weight:600;color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.legend-pct{font-size:11px;font-weight:800;color:var(--text2)}
+
+.cat-bars-section{margin:12px 20px 0;background:var(--white);border-radius:var(--r20);padding:16px 18px;box-shadow:var(--shadow)}
+.cat-bar-item{margin-bottom:12px}
+.cat-bar-item:last-child{margin-bottom:0}
+.cat-bar-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}
+.cat-bar-left{display:flex;align-items:center;gap:8px}
+.cat-bar-emoji{font-size:16px}
+.cat-bar-name{font-size:12px;font-weight:700;color:var(--text)}
+.cat-bar-amt{font-size:12px;font-weight:800;color:var(--dark);letter-spacing:-.3px}
+.cat-bar-track{height:6px;background:var(--bg);border-radius:3px;overflow:hidden}
+.cat-bar-fill{height:100%;border-radius:3px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+
+.income-exp-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 20px 0}
+.ie-card{background:var(--white);border-radius:var(--r16);padding:14px;box-shadow:var(--shadow)}
+.ie-lbl{font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+.ie-amt{font-family:'Nunito',sans-serif;font-size:18px;font-weight:900;letter-spacing:-.5px}
+.ie-sub{font-size:10px;color:var(--text3);font-weight:500;margin-top:3px}
+
 </style>
 </head>
 <body>
@@ -455,14 +497,62 @@ html.standalone #bottom-nav{
       <button class="add-goal-btn" onclick="showAddGoalSheet()">＋ Thêm mục tiêu mới</button>
     </div>
 
+
+    <!-- STATS -->
+    <div id="panel-stats" class="panel">
+      <div class="stats-hero">
+        <div class="stats-hero-lbl">Tổng chi tiêu</div>
+        <div class="stats-hero-amt">₫<span id="st-total-exp">0</span></div>
+        <div class="stats-hero-sub" id="st-period-label">Tháng này</div>
+        <div class="stats-period-bar">
+          <button class="stats-period-btn" onclick="setStatsPeriod('week')">Tuần</button>
+          <button class="stats-period-btn active" onclick="setStatsPeriod('month')">Tháng</button>
+          <button class="stats-period-btn" onclick="setStatsPeriod('last_month')">Tháng trước</button>
+          <button class="stats-period-btn" onclick="setStatsPeriod('all')">Tất cả</button>
+        </div>
+      </div>
+
+      <div class="income-exp-row">
+        <div class="ie-card">
+          <div class="ie-lbl" style="color:var(--mint2)">Thu nhập</div>
+          <div class="ie-amt" style="color:var(--mint2)">₫<span id="st-income">0</span></div>
+          <div class="ie-sub" id="st-income-count">0 giao dịch</div>
+        </div>
+        <div class="ie-card">
+          <div class="ie-lbl" style="color:var(--red)">Chi tiêu</div>
+          <div class="ie-amt" style="color:var(--red)">₫<span id="st-expense">0</span></div>
+          <div class="ie-sub" id="st-expense-count">0 giao dịch</div>
+        </div>
+      </div>
+
+      <div class="chart-section">
+        <div class="chart-title">Chi tiêu theo danh mục</div>
+        <div id="no-expense-msg" class="empty-msg" style="padding:16px 0;display:none">
+          <span class="empty-icon" style="font-size:28px">📊</span>Chưa có dữ liệu chi tiêu
+        </div>
+        <div id="chart-content">
+          <div class="donut-wrap">
+            <canvas id="donut-canvas" width="110" height="110"></canvas>
+            <div class="donut-legend" id="donut-legend"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cat-bars-section">
+        <div class="chart-title">Phân tích từng danh mục</div>
+        <div id="cat-bars-list"></div>
+      </div>
+      <div style="height:16px"></div>
+    </div>
+
     <!-- SETTINGS -->
     <div id="panel-settings" class="panel">
       <div class="settings-hero"><div class="page-title">Cài đặt</div></div>
       <div class="settings-card">
         <h3>Từ khoá giọng nói</h3>
-        <div class="setting-row"><div class="setting-lbl" style="color:var(--red)">Chi tiêu</div><input class="s-input" id="kw-exp" value="spend,chi" oninput="saveKeywords()"></div>
-        <div class="setting-row"><div class="setting-lbl" style="color:var(--mint2)">Thu nhập</div><input class="s-input" id="kw-inc" value="income,thu" oninput="saveKeywords()"></div>
-        <div class="setting-row"><div class="setting-lbl" style="color:var(--amber)">Tiết kiệm</div><input class="s-input" id="kw-sav" value="save,tiết kiệm" oninput="saveKeywords()"></div>
+        <div class="setting-row"><div class="setting-lbl" style="color:var(--red)">Chi tiêu</div><input class="s-input" id="kw-exp" value="spend,chi,mua,trả" oninput="saveKeywords()"></div>
+        <div class="setting-row"><div class="setting-lbl" style="color:var(--mint2)">Thu nhập</div><input class="s-input" id="kw-inc" value="income,thu nhập,lương,nhận tiền" oninput="saveKeywords()"></div>
+        <div class="setting-row"><div class="setting-lbl" style="color:var(--amber)">Tiết kiệm</div><input class="s-input" id="kw-sav" value="save,tiết kiệm,để dành,tích lũy" oninput="saveKeywords()"></div>
       </div>
       <div class="settings-card">
         <h3>Danh mục chi tiêu</h3>
@@ -500,6 +590,7 @@ html.standalone #bottom-nav{
   <div id="bottom-nav">
     <button class="nav-item active" id="nav-dashboard" onclick="showTab('dashboard')"><div class="nav-icon">🏠</div><div class="nav-label">Trang chủ</div></button>
     <button class="nav-item" id="nav-transactions" onclick="showTab('transactions')"><div class="nav-icon">📋</div><div class="nav-label">Giao dịch</div></button>
+    <button class="nav-item" id="nav-stats" onclick="showTab('stats')"><div class="nav-icon">📊</div><div class="nav-label">Thống kê</div></button>
     <button class="nav-item" id="nav-savings" onclick="showTab('savings')"><div class="nav-icon">🎯</div><div class="nav-label">Tiết kiệm</div></button>
     <button class="nav-item" id="nav-settings" onclick="showTab('settings')"><div class="nav-icon">⚙️</div><div class="nav-label">Cài đặt</div></button>
   </div>
@@ -526,7 +617,7 @@ const D = {
     {id:5,name:'Giải trí',emoji:'🎮'},{id:6,name:'Hoá đơn',emoji:'🧾'},
     {id:7,name:'Học tập',emoji:'📚'},{id:8,name:'Khác',emoji:'📌'}
   ],
-  kw: {exp:['spend','chi'], inc:['income','thu'], sav:['save','tiết kiệm']},
+  kw: {exp:['spend','chi','mua','trả'], inc:['income','thu nhập','lương','nhận tiền'], sav:['save','tiết kiệm','để dành','tích lũy']},
   learned: {},
   nextId: 100,
   nextSavId: 10
@@ -535,7 +626,16 @@ const D = {
 function load() {
   try {
     const s = localStorage.getItem('vochi2');
-    if (s) { const p = JSON.parse(s); Object.assign(D, p); }
+    if (s) {
+      const p = JSON.parse(s);
+      Object.assign(D, p);
+      // Luôn dùng keywords mới nhất — tránh keywords cũ lỗi thời trong localStorage
+      D.kw = {
+        exp: ['spend','chi','mua','trả'],
+        inc: ['income','thu nhập','lương','nhận tiền'],
+        sav: ['save','tiết kiệm','để dành','tích lũy']
+      };
+    }
   } catch(e) {}
 }
 function persist() {
@@ -636,13 +736,29 @@ function parseAmt(s) {
   m = s.match(/(\d[\d.,]*)/); if(m) return parseFloat(m[1].replace(/\./g,'').replace(',','.'));
   return 0;
 }
+function matchKeyword(text, kw) {
+  // Ưu tiên khớp từ đầy đủ, fallback sang substring nếu không dùng ký tự Latin
+  const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  // Word boundary \b hoạt động với Latin (spend, chi, thu, save...)
+  // Với tiếng Việt có dấu, dùng khoảng trắng hoặc đầu/cuối chuỗi
+  const wordBoundary = new RegExp('(?:^|\\s)' + escaped + '(?:\\s|$)', 'i');
+  const exactWord = new RegExp('\\b' + escaped + '\\b', 'i');
+  return wordBoundary.test(text) || exactWord.test(text);
+}
+
 function detectIntent(text) {
-  const t = text.toLowerCase();
-  for (const kw of (D.kw.sav||[])) { if(t.includes(kw.toLowerCase())) return 'saving'; }
-  for (const kw of (D.kw.inc||[])) { if(t.includes(kw.toLowerCase())) return 'income'; }
-  for (const kw of (D.kw.exp||[])) { if(t.includes(kw.toLowerCase())) return 'expense'; }
-  if (/lương|salary|freelance|nhận|thưởng|bonus/.test(t)) return 'income';
+  const t = text.toLowerCase().trim();
+  // Kiểm tra saving trước (ưu tiên cao nhất)
+  for (const kw of (D.kw.sav||[])) { if(matchKeyword(t, kw.toLowerCase())) return 'saving'; }
+  // Kiểm tra income — dùng word match để tránh "thu" khớp "thuốc"
+  for (const kw of (D.kw.inc||[])) { if(matchKeyword(t, kw.toLowerCase())) return 'income'; }
+  // Kiểm tra expense
+  for (const kw of (D.kw.exp||[])) { if(matchKeyword(t, kw.toLowerCase())) return 'expense'; }
+  // Fallback regex — các từ income/saving phổ biến
+  if (/(?:^|\s)(?:lương|salary|freelance|thưởng|bonus)(?:\s|$)/.test(t)) return 'income';
+  if (/(?:^|\s)nhận(?:\s|$)/.test(t)) return 'income';
   if (/tiết kiệm|tích lũy|để dành/.test(t)) return 'saving';
+  // Mặc định là expense
   return 'expense';
 }
 function extractDesc(text) {
@@ -1194,13 +1310,146 @@ function updateAI(txns, income, expense, saving) {
 }
 
 // ─── TABS ─────────────────────────────────────────────────────────────────────
+
+// ─── RENDER STATS ─────────────────────────────────────────────────────────────
+let _statsPeriod = 'month';
+const PALETTE = ['#4CAF82','#4a8fe8','#f5a623','#e8504a','#9b59b6','#1abc9c','#e67e22','#e91e8c'];
+
+function setStatsPeriod(p) {
+  _statsPeriod = p;
+  document.querySelectorAll('.stats-period-btn').forEach(b => {
+    const map = {week:'Tuần',month:'Tháng',last_month:'Tháng trước',all:'Tất cả'};
+    b.classList.toggle('active', b.textContent === map[p]);
+  });
+  renderStats();
+}
+
+function getStatsTxns() {
+  const now = new Date();
+  if (_statsPeriod === 'week') {
+    const start = new Date(now); start.setDate(now.getDate()-now.getDay()); start.setHours(0,0,0,0);
+    return D.txns.filter(t => t.ts >= start.getTime());
+  }
+  if (_statsPeriod === 'month') {
+    return D.txns.filter(t => { const d=new Date(t.ts); return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear(); });
+  }
+  if (_statsPeriod === 'last_month') {
+    const lm = new Date(now.getFullYear(), now.getMonth()-1, 1);
+    return D.txns.filter(t => { const d=new Date(t.ts); return d.getMonth()===lm.getMonth()&&d.getFullYear()===lm.getFullYear(); });
+  }
+  return D.txns;
+}
+
+function renderStats() {
+  const txns = getStatsTxns();
+  const periodLabels = {week:'Tuần này',month:'Tháng này',last_month:'Tháng trước',all:'Tất cả'};
+  document.getElementById('st-period-label').textContent = periodLabels[_statsPeriod];
+
+  const expTxns = txns.filter(t => t.type==='expense');
+  const incTxns = txns.filter(t => t.type==='income');
+  const totalExp = expTxns.reduce((a,t) => a+t.amount, 0);
+  const totalInc = incTxns.reduce((a,t) => a+t.amount, 0);
+
+  document.getElementById('st-total-exp').textContent = Math.round(totalExp).toLocaleString('vi-VN');
+  document.getElementById('st-income').textContent = Math.round(totalInc).toLocaleString('vi-VN');
+  document.getElementById('st-expense').textContent = Math.round(totalExp).toLocaleString('vi-VN');
+  document.getElementById('st-income-count').textContent = incTxns.length + ' giao dịch';
+  document.getElementById('st-expense-count').textContent = expTxns.length + ' giao dịch';
+
+  // Group by category
+  const catMap = {};
+  expTxns.forEach(t => {
+    const catId = t.cat || 8;
+    if (!catMap[catId]) catMap[catId] = 0;
+    catMap[catId] += t.amount;
+  });
+
+  const sorted = Object.entries(catMap)
+    .map(([id, amt]) => ({ cat: getCat(parseInt(id)), amt }))
+    .sort((a,b) => b.amt - a.amt);
+
+  const noMsg = document.getElementById('no-expense-msg');
+  const chartContent = document.getElementById('chart-content');
+
+  if (!sorted.length) {
+    noMsg.style.display = 'block';
+    chartContent.style.display = 'none';
+    document.getElementById('cat-bars-list').innerHTML = '<div class="empty-msg" style="padding:12px 0">Chưa có dữ liệu</div>';
+    return;
+  }
+  noMsg.style.display = 'none';
+  chartContent.style.display = 'block';
+
+  // Draw donut chart
+  const canvas = document.getElementById('donut-canvas');
+  const ctx = canvas.getContext('2d');
+  const cx=55, cy=55, r=42, inner=26;
+  ctx.clearRect(0,0,110,110);
+  let startAngle = -Math.PI/2;
+  sorted.forEach((item, i) => {
+    const slice = (item.amt / totalExp) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, startAngle, startAngle+slice);
+    ctx.closePath();
+    ctx.fillStyle = PALETTE[i % PALETTE.length];
+    ctx.fill();
+    startAngle += slice;
+  });
+  // Center hole
+  ctx.beginPath();
+  ctx.arc(cx, cy, inner, 0, Math.PI*2);
+  ctx.fillStyle = '#fff';
+  ctx.fill();
+  // Center text
+  ctx.fillStyle = '#1a2e22';
+  ctx.font = 'bold 11px Nunito,sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(sorted.length + ' mục', cx, cy);
+
+  // Legend
+  const legend = document.getElementById('donut-legend');
+  legend.innerHTML = sorted.slice(0,5).map((item,i) => {
+    const pct = Math.round(item.amt/totalExp*100);
+    return `<div class="legend-item">
+      <div class="legend-dot" style="background:${PALETTE[i%PALETTE.length]}"></div>
+      <div class="legend-name">${item.cat.emoji} ${item.cat.name}</div>
+      <div class="legend-pct">${pct}%</div>
+    </div>`;
+  }).join('');
+
+  // Bar chart
+  const maxAmt = sorted[0].amt;
+  document.getElementById('cat-bars-list').innerHTML = sorted.map((item,i) => {
+    const pct = Math.round(item.amt/totalExp*100);
+    const barW = Math.round(item.amt/maxAmt*100);
+    return `<div class="cat-bar-item">
+      <div class="cat-bar-header">
+        <div class="cat-bar-left">
+          <span class="cat-bar-emoji">${item.cat.emoji}</span>
+          <span class="cat-bar-name">${item.cat.name}</span>
+        </div>
+        <div>
+          <span class="cat-bar-amt">${fmt(item.amt)}</span>
+          <span style="font-size:10px;color:var(--text3);margin-left:4px">${pct}%</span>
+        </div>
+      </div>
+      <div class="cat-bar-track">
+        <div class="cat-bar-fill" style="width:${barW}%;background:${PALETTE[i%PALETTE.length]}"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
 function showTab(name) {
-  ['dashboard','transactions','savings','settings'].forEach(t => {
+  ['dashboard','transactions','stats','savings','settings'].forEach(t => {
     document.getElementById('panel-'+t).classList.toggle('active', t===name);
     document.getElementById('nav-'+t)?.classList.toggle('active', t===name);
   });
   if (name==='dashboard') renderDashboard();
   if (name==='transactions') renderAllTxns();
+  if (name==='stats') renderStats();
   if (name==='savings') renderSavings();
   if (name==='settings') renderSettings();
 }
