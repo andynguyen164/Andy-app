@@ -385,17 +385,21 @@ html.standalone #phone{
   border-radius:0;
   box-shadow:none;
   width:100%;
-  /* height set bởi JS = window.innerHeight chính xác */
 }
-/* Ẩn khoảng trắng thừa giữa voice bar và bottom nav trong standalone */
+/* Standalone: compact, không có khoảng thừa */
 html.standalone #voice-bar{
   padding:8px 16px;
-  padding-bottom:calc(8px + env(safe-area-inset-bottom));
+  /* safe-area-inset-bottom đã đủ, không cộng thêm */
+  padding-bottom:env(safe-area-inset-bottom);
+  border-top:1px solid var(--border);
+  box-shadow:none;
 }
 html.standalone #bottom-nav{
-  padding:0 8px;
-  padding-bottom:calc(20px + env(safe-area-inset-bottom));
+  padding:4px 8px;
+  /* Chỉ dùng đúng safe area, không thêm padding cứng */
+  padding-bottom:env(safe-area-inset-bottom);
 }
+html.standalone #quick-prompts.open{ max-height:150px; }
 
 /* TOAST */
 #toast{position:absolute;top:70px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--dark);border-radius:var(--r20);padding:12px 22px;font-size:13px;font-weight:700;color:#fff;white-space:nowrap;z-index:200;transition:all .3s cubic-bezier(.4,0,.2,1);opacity:0;pointer-events:none;max-width:300px;text-align:center;box-shadow:0 10px 30px rgba(26,46,34,.35)}
@@ -2144,14 +2148,15 @@ function htmlEsc(s) {
 
   if (isStandalone) {
     document.documentElement.classList.add('standalone');
-
-    // Đảm bảo #phone chiếm đúng chiều cao màn hình thật
-    function setPhoneHeight() {
-      const h = window.innerHeight;
-      document.getElementById('phone').style.height = h + 'px';
+    // Dùng 100dvh thay vì window.innerHeight — chính xác hơn trên iOS
+    const phone = document.getElementById('phone');
+    if (phone) {
+      phone.style.height = '100dvh';
+      // Fallback nếu dvh không support
+      if (!CSS.supports('height', '100dvh')) {
+        phone.style.height = window.innerHeight + 'px';
+      }
     }
-    setPhoneHeight();
-    window.addEventListener('resize', setPhoneHeight);
   }
 })();
 
