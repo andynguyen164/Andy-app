@@ -365,10 +365,11 @@ html,body{
 .chip-amt{background:var(--white);color:var(--dark);border:1.5px solid var(--border);font-family:'Nunito',sans-serif;font-weight:800}
 .cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px}
 .cat-btn{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--r16);padding:14px 8px;text-align:center;cursor:pointer;transition:all .2s}
-.cat-btn:hover,.cat-btn.selected{background:var(--mint-light);border-color:var(--mint)}
+.cat-btn:hover{background:var(--mint-light);border-color:var(--mint)}
+.cat-btn.selected{background:#2C4D9C;border-color:#2C4D9C;}
 .cat-btn .cat-emoji{font-size:22px;display:block;margin-bottom:6px}
 .cat-btn .cat-name{font-size:11px;font-weight:700;color:var(--text2)}
-.cat-btn.selected .cat-name{color:var(--mint2)}
+.cat-btn.selected .cat-name{color:#fff;font-weight:800}
 .confirm-btn{width:100%;padding:17px;border-radius:var(--r20);border:none;background:var(--mint);color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:background .2s;box-shadow:0 4px 18px rgba(76,175,130,.45)}
 .confirm-btn:hover{background:var(--mint2)}.confirm-btn:disabled{background:var(--border);color:var(--text3);box-shadow:none;cursor:not-allowed}
 .bucket-list{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
@@ -388,16 +389,14 @@ html.standalone #phone{
 }
 /* Standalone: compact, không có khoảng thừa */
 html.standalone #voice-bar{
-  padding:8px 16px;
-  /* safe-area-inset-bottom đã đủ, không cộng thêm */
-  padding-bottom:env(safe-area-inset-bottom);
+  padding:10px 16px;
+  padding-bottom:14px;
   border-top:1px solid var(--border);
   box-shadow:none;
 }
 html.standalone #bottom-nav{
-  padding:4px 8px;
-  /* Chỉ dùng đúng safe area, không thêm padding cứng */
-  padding-bottom:env(safe-area-inset-bottom);
+  padding:6px 8px;
+  padding-bottom:calc(env(safe-area-inset-bottom) + 6px);
 }
 html.standalone #quick-prompts.open{ max-height:150px; }
 
@@ -598,6 +597,7 @@ body.night-mode .stats-hero{background:linear-gradient(150deg,#1a3070,#2C4D9C);}
 body.night-mode .voice-row #voice-input-box{background:#16203a;border-color:#2e3d62;color:#e8edf8;}
 body.night-mode .qp-chip{background:#16203a;border-color:#2e3d62;color:#a0b0d0;}
 body.night-mode .cat-btn{background:#16203a;border-color:#2e3d62;}
+body.night-mode .cat-btn.selected{background:#2C4D9C;border-color:#2C4D9C;}
 body.night-mode .modal-input{background:#16203a;border-color:#2e3d62;color:#e8edf8;}
 body.night-mode .sheet{background:#222d4e;}
 body.night-mode #toast{background:#2C4D9C;}
@@ -1509,11 +1509,11 @@ function swipeEnd(e, id) {
   if (s.dx < -SWIPE_THRESHOLD) {
     // Quẹt trái → XOÁ
     el.style.transform = 'translateX(-110%)';
-    setTimeout(() => { deleteTxn(id); }, 220);
+    setTimeout(() => { deleteTxn(Number(id)); }, 220);
   } else if (s.dx > SWIPE_THRESHOLD) {
     // Quẹt phải → SỬA
     el.style.transform = 'translateX(0)';
-    showEditTxnSheet(id);
+    showEditTxnSheet(Number(id));
   } else {
     // Chưa đủ → snap về 0
     el.style.transform = 'translateX(0)';
@@ -1532,7 +1532,7 @@ function swipeEnd(e, id) {
 
 // _editCat lưu trong closure của từng sheet, không dùng global nữa
 function showEditTxnSheet(id) {
-  const t = D.txns.find(x => x.id === id);
+  const t = D.txns.find(x => Number(x.id) === Number(id));
   if (!t) return;
 
   // Reset về cat hiện tại của giao dịch
