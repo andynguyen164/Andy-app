@@ -2160,57 +2160,51 @@ renderSavings();
 </script>
 
 <!-- ── UPDATE CHECKER ── -->
-<div id="update-bar" style="
-  display:none;position:fixed;top:0;left:0;right:0;
-  background:linear-gradient(90deg,#2d8a5e,#4CAF82);
-  color:#fff;padding:12px 20px;
-  display:none;align-items:center;justify-content:space-between;
+<style>
+@keyframes slideDown{from{transform:translateY(-100%)}to{transform:translateY(0)}}
+#update-bar{
+  display:none;position:fixed;
+  /* Đặt ở DƯỚI thay vì trên — tránh bị status bar che */
+  bottom:calc(80px + env(safe-area-inset-bottom));
+  left:16px;right:16px;top:auto;
+  background:linear-gradient(90deg,#2C4D9C,#3a6bbf);
+  color:#fff;padding:12px 16px;
+  align-items:center;justify-content:space-between;
   font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;
-  z-index:999;box-shadow:0 4px 16px rgba(0,0,0,.2);
-  animation:slideDown .3s cubic-bezier(.4,0,.2,1);
-" id="update-bar">
+  z-index:9999;
+  border-radius:16px;
+  box-shadow:0 8px 24px rgba(44,77,156,.5);
+  animation:slideUp2 .4s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes slideUp2{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+</style>
+<div id="update-bar">
   <span>🎉 Có phiên bản mới!</span>
   <button onclick="doReload()" style="
     background:rgba(255,255,255,.25);border:1.5px solid rgba(255,255,255,.5);
     border-radius:20px;color:#fff;padding:6px 16px;
     font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer;
-  ">Cập nhật ngay</button>
+  ">Cập nhật ngay ↺</button>
 </div>
-<style>
-@keyframes slideDown{from{transform:translateY(-100%)}to{transform:translateY(0)}}
-</style>
 
 <script>
-// Kiểm tra update bằng cách fetch Last-Modified header của chính file này
-// Không cần hardcode build number — tự động phát hiện khi GitHub deploy
-(function checkUpdate() {
-  const STORED = localStorage.getItem('vochi_last_modified');
-  const url = window.location.href.split('?')[0];
-
-  fetch(url, { method: 'HEAD', cache: 'no-store' })
-    .then(res => {
-      const lastMod = res.headers.get('Last-Modified') || res.headers.get('ETag') || '';
-      if (!lastMod) return;
-
-      if (STORED && STORED !== lastMod) {
-        // File đã thay đổi trên server → hiện banner
-        const bar = document.getElementById('update-bar');
-        if (bar) bar.style.display = 'flex';
-        // Lưu value mới để lần sau so sánh
-        localStorage.setItem('vochi_last_modified', lastMod);
-      } else if (!STORED) {
-        // Lần đầu mở → lưu lại, không hiện banner
-        localStorage.setItem('vochi_last_modified', lastMod);
-      }
-    })
-    .catch(() => {}); // offline hoặc lỗi → bỏ qua
-})();
+// Build string — thay đổi mỗi lần export file mới
+const BUILD = '202604021040';
+const STORED_BUILD = localStorage.getItem('vochi_build');
 
 function doReload() {
-  // Xoá cache bằng cách thêm timestamp vào URL
-  const base = window.location.href.split('?')[0];
-  window.location.href = base + '?reload=' + Date.now();
+  localStorage.setItem('vochi_build', BUILD);
+  window.location.href = window.location.href.split('?')[0] + '?v=' + BUILD;
 }
+
+if (!STORED_BUILD) {
+  // Lần đầu mở — lưu build, không hiện banner
+  localStorage.setItem('vochi_build', BUILD);
+} else if (STORED_BUILD !== BUILD) {
+  // Build mới hơn — hiện banner
+  document.getElementById('update-bar').style.display = 'flex';
+}
+// Nếu STORED_BUILD === BUILD → đã đúng version, không làm gì
 </script>
 
 </body>
