@@ -226,7 +226,7 @@ html,body{
 /* Nền trái (edit - xanh) và phải (xoá - đỏ) */
 .txn-bg-left{
   position:absolute;inset:0;
-  background:linear-gradient(90deg,#3a9e72,#4CAF82);
+  background:linear-gradient(90deg,#e67e00,#f5a623);
   border-radius:var(--r20);
   display:flex;align-items:center;padding-left:22px;gap:8px;
   color:#fff;font-size:13px;font-weight:800;
@@ -607,7 +607,7 @@ body.night-mode .cat-bar-track{background:#16203a;}
 body.night-mode .saving-progress{background:#16203a;}
 body.night-mode .bucket-btn,
 body.night-mode .goal-btn{background:#16203a;border-color:#2e3d62;color:#a0b0d0;}
-body.night-mode .txn-bg-left{background:linear-gradient(90deg,#1a3a6a,#2C4D9C);}
+body.night-mode .txn-bg-left{background:linear-gradient(90deg,#c96800,#e67e00);}
 body.night-mode .txn-bg-right{background:linear-gradient(90deg,#6a1a1a,#b03030);}
 body.night-mode #main{background:#1a2440;}
 /* Night indicator nhỏ ở góc */
@@ -1566,33 +1566,40 @@ function pickEditCat(catId) {
 
 function saveEditTxn(id) {
   const numId = Number(id);
-  const t = D.txns.find(x => Number(x.id) === numId);
-  if (!t) { toast('❌ Không tìm thấy giao dịch (id=' + id + ')'); return; }
 
-  // Đọc tất cả giá trị TRƯỚC khi thay đổi t
-  const descEl   = document.getElementById('et-desc');
-  const amtEl    = document.getElementById('et-amt');
-  const body     = document.getElementById('sheet-body');
+  // Đọc input TRƯỚC — sau closeSheet() DOM sẽ bị xoá
+  const descVal = (document.getElementById('et-desc') || {}).value;
+  const amtVal  = (document.getElementById('et-amt')  || {}).value;
+  const body    = document.getElementById('sheet-body');
+  const catVal  = body ? body.dataset.editCat : null;
 
-  const newDesc   = descEl ? descEl.value.trim() : t.desc;
-  const newAmount = amtEl  ? parseFloat(amtEl.value) : NaN;
-  const newCat    = body   ? parseInt(body.dataset.editCat) : t.cat;
+  // Tìm transaction
+  const idx = D.txns.findIndex(x => Number(x.id) === numId);
+  if (idx === -1) { toast('❌ Không tìm thấy giao dịch'); return; }
+
+  const t = D.txns[idx];
   const oldAmount = t.amount;
 
-  // Update saving bucket trước khi ghi đè amount
-  if (t.type === 'saving' && t.bucketId && !isNaN(newAmount) && newAmount > 0) {
+  // Cập nhật các trường — giữ giá trị cũ nếu input rỗng
+  const newDesc   = (descVal !== undefined && descVal.trim() !== '') ? descVal.trim() : t.desc;
+  const newAmount = (amtVal  !== undefined && amtVal.trim()  !== '' && !isNaN(parseFloat(amtVal)))
+                    ? parseFloat(amtVal) : t.amount;
+  const newCat    = (catVal  !== undefined && catVal !== '' && !isNaN(parseInt(catVal)))
+                    ? parseInt(catVal) : t.cat;
+
+  // Điều chỉnh bucket tiết kiệm nếu cần
+  if (t.type === 'saving' && t.bucketId) {
     const g = D.savings.find(s => Number(s.id) === Number(t.bucketId));
     if (g) g.current = Math.max(0, g.current - oldAmount + newAmount);
   }
 
-  // Ghi đè — dùng fallback về giá trị cũ nếu input rỗng/không hợp lệ
-  t.desc   = newDesc || t.desc;
-  t.amount = (!isNaN(newAmount) && newAmount > 0) ? newAmount : t.amount;
-  if (t.type === 'expense') t.cat = (!isNaN(newCat) && newCat > 0) ? newCat : t.cat;
-
-  // Force update reference trong array (tránh mutation issue)
-  const idx = D.txns.findIndex(x => Number(x.id) === numId);
-  if (idx !== -1) D.txns[idx] = { ...t };
+  // Ghi trực tiếp vào array
+  D.txns[idx] = {
+    ...t,
+    desc:   newDesc,
+    amount: newAmount,
+    cat:    (t.type === 'expense') ? newCat : t.cat,
+  };
 
   persist();
   closeSheet();
