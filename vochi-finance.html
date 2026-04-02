@@ -1544,7 +1544,7 @@ function showEditTxnSheet(id) {
     <div class="sheet-title">Sửa giao dịch</div>
     <div class="sheet-sub">${fmtDate(t.ts)}</div>
     <input id="et-desc" class="modal-input" placeholder="Mô tả" value="${htmlEsc(t.desc)}">
-    <input id="et-amt" class="modal-input" type="text" inputmode="numeric" placeholder="Số tiền (₫)" value="${t.amount}">
+    <input id="et-amt" class="modal-input" type="text" inputmode="numeric" placeholder="Số tiền (₫)" value="${t.amount.toLocaleString('vi-VN')}" oninput="formatNumberInput(this)" data-raw="${t.amount}">
     ${t.type === 'expense' ? `
     <div style="margin-bottom:10px;font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.5px;text-transform:uppercase">Danh mục</div>
     <div class="cat-grid">${D.cats.map(c => `<div class="cat-btn${c.id===(t.cat||8)?' selected':''}" id="et-cb${c.id}" onclick="pickEditCat(${c.id})"><span class="cat-emoji">${c.emoji}</span><span class="cat-name">${htmlEsc(c.name)}</span></div>`).join('')}</div>
@@ -1572,7 +1572,7 @@ function saveEditTxn(id) {
   // Đọc input TRƯỚC — sau closeSheet() DOM sẽ bị xoá
   const descVal = (document.getElementById('et-desc') || {}).value;
   const amtEl2  = document.getElementById('et-amt');
-  const amtVal  = amtEl2 ? amtEl2.value.replace(/[^0-9]/g,'') : '';
+  const amtVal  = amtEl2 ? (amtEl2.dataset.raw || amtEl2.value.replace(/[^0-9]/g,'')) : '';
   const body    = document.getElementById('sheet-body');
   const catVal  = body ? body.dataset.editCat : null;
 
@@ -1705,6 +1705,23 @@ function formatAmountInput(input) {
 }
 
 
+
+
+// ── FORMAT SỐ KHI NHẬP ───────────────────────────────────────────────────────
+function formatNumberInput(input) {
+  // Lấy raw — chỉ giữ số
+  let raw = input.value.replace(/[^0-9]/g, '');
+  if (!raw) { input.value = ''; return; }
+  // Hiển thị có dấu phẩy
+  input.value = parseInt(raw, 10).toLocaleString('vi-VN');
+  // Lưu raw vào dataset để saveEditTxn đọc
+  input.dataset.raw = raw;
+}
+
+function getInputRaw(input) {
+  // Ưu tiên dataset.raw, fallback về value stripped
+  return input.dataset.raw || input.value.replace(/[^0-9]/g, '');
+}
 
 // ── QUICK PROMPTS ──────────────────────────────────────────────────────────
 let _promptsOpen = false;
