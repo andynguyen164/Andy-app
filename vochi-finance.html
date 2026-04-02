@@ -862,26 +862,6 @@ body.night-mode #main{background:#1a2440;}
   </div>
 
   <div id="voice-bar">
-    <div id="custom-numpad">
-      <div class="numpad-display">
-        <div class="numpad-display-val" id="numpad-display">0</div>
-        <button class="numpad-display-del" onclick="numpadDel()">⌫</button>
-      </div>
-      <div class="numpad-grid">
-        <button class="numpad-btn" onclick="numpadKey('1')">1</button>
-        <button class="numpad-btn" onclick="numpadKey('2')">2</button>
-        <button class="numpad-btn" onclick="numpadKey('3')">3</button>
-        <button class="numpad-btn" onclick="numpadKey('4')">4</button>
-        <button class="numpad-btn" onclick="numpadKey('5')">5</button>
-        <button class="numpad-btn" onclick="numpadKey('6')">6</button>
-        <button class="numpad-btn" onclick="numpadKey('7')">7</button>
-        <button class="numpad-btn" onclick="numpadKey('8')">8</button>
-        <button class="numpad-btn" onclick="numpadKey('9')">9</button>
-        <button class="numpad-btn zero" onclick="numpadKey('000')">000</button>
-        <button class="numpad-btn" onclick="numpadKey('0')">0</button>
-        <button class="numpad-btn confirm" onclick="numpadConfirm()">✓ OK</button>
-      </div>
-    </div>
     <div id="waveform-container"><div class="waveform"><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div></div></div>
     <div id="voice-status">Nhấn 🎤 để nói hoặc gõ lệnh bên dưới</div>
     <div class="voice-row">
@@ -1608,7 +1588,9 @@ function showEditTxnSheet(id) {
     <div class="sheet-title">Sửa giao dịch</div>
     <div class="sheet-sub">${fmtDate(t.ts)}</div>
     <input id="et-desc" class="modal-input" placeholder="Mô tả" value="${htmlEsc(t.desc)}">
-    <input id="et-amt" class="modal-input" type="text" readonly placeholder="Nhập số tiền" value="${t.amount}" onclick="showNumpad(this)" style="cursor:pointer">
+    <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase">Số tiền</div>
+    <input id="et-amt" type="hidden" value="${t.amount}">
+    ${numpadHTML()}
     ${t.type === 'expense' ? `
     <div style="margin-bottom:10px;font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.5px;text-transform:uppercase">Danh mục</div>
     <div class="cat-grid">${D.cats.map(c => `<div class="cat-btn${c.id===(t.cat||8)?' selected':''}" id="et-cb${c.id}" onclick="pickEditCat(${c.id})"><span class="cat-emoji">${c.emoji}</span><span class="cat-name">${htmlEsc(c.name)}</span></div>`).join('')}</div>
@@ -1620,6 +1602,8 @@ function showEditTxnSheet(id) {
   // Lưu cat hiện tại vào data attribute để saveEditTxn đọc
   document.getElementById('sheet-body').dataset.editCat = currentEditCat;
   document.getElementById('sheet-body').dataset.editId  = String(id);
+  // Init numpad với giá trị hiện tại
+  initNumpadFromValue(t.amount);
 }
 
 function pickEditCat(catId) {
@@ -1636,7 +1620,7 @@ function saveEditTxn(id) {
   // Đọc input TRƯỚC — sau closeSheet() DOM sẽ bị xoá
   const descVal = (document.getElementById('et-desc') || {}).value;
   const amtEl2  = document.getElementById('et-amt');
-  const amtVal  = amtEl2 ? amtEl2.value.replace(/[.,]/g,'') : '';
+  const amtVal  = amtEl2 ? amtEl2.value.replace(/[^0-9]/g,'') : '';
   const body    = document.getElementById('sheet-body');
   const catVal  = body ? body.dataset.editCat : null;
 
@@ -1718,50 +1702,70 @@ function numpadKey(k) {
     if (_numpadRaw === '0') _numpadRaw = '';
     _numpadRaw += k;
   }
-  // Giới hạn 12 chữ số
   if (_numpadRaw.length > 12) _numpadRaw = _numpadRaw.slice(0, 12);
-  document.getElementById('numpad-display').textContent = fmtNumpadDisplay(_numpadRaw);
+  _syncNumpad();
 }
 
 function numpadDel() {
   _numpadRaw = _numpadRaw.slice(0, -1);
-  document.getElementById('numpad-display').textContent = fmtNumpadDisplay(_numpadRaw) || '0';
+  _syncNumpad();
+}
+
+function _syncNumpad() {
+  const disp = fmtNumpadDisplay(_numpadRaw) || '0';
+  const dispEl = document.getElementById('numpad-display');
+  if (dispEl) dispEl.textContent = disp;
+  // Sync hidden input để saveEditTxn đọc
+  const hiddenAmt = document.getElementById('et-amt');
+  if (hiddenAmt) hiddenAmt.value = _numpadRaw;
 }
 
 function numpadConfirm() {
-  const val = parseInt(_numpadRaw, 10) || 0;
-  if (_numpadTarget) {
-    _numpadTarget.value = _numpadRaw; // raw number, parseAmt sẽ đọc
-    // Hiển thị có dấu phẩy trong input
-    _numpadTarget.dataset.displayVal = fmtNumpadDisplay(_numpadRaw);
-    _numpadTarget.value = _numpadRaw;
-  } else {
-    // Voice bar — điền vào ô nhập kèm text hiện tại
-    const box = document.getElementById('voice-input-box');
-    const cur = box.value.trim();
-    // Thay số cũ nếu có, hoặc thêm vào cuối
-    box.value = cur.replace(/\d[\d.,]*/g, '').trim() + ' ' + _numpadRaw;
-    box.value = box.value.trim();
-  }
-  hideNumpad();
+  _syncNumpad();
+}
+
+
+function numpadHTML() {
+  return `
+    <div id="custom-numpad" class="visible" style="margin-top:12px">
+      <div class="numpad-display">
+        <div class="numpad-display-val" id="numpad-display">0</div>
+        <button class="numpad-display-del" onclick="numpadDel()">⌫</button>
+      </div>
+      <div class="numpad-grid">
+        <button class="numpad-btn" onclick="numpadKey('1')">1</button>
+        <button class="numpad-btn" onclick="numpadKey('2')">2</button>
+        <button class="numpad-btn" onclick="numpadKey('3')">3</button>
+        <button class="numpad-btn" onclick="numpadKey('4')">4</button>
+        <button class="numpad-btn" onclick="numpadKey('5')">5</button>
+        <button class="numpad-btn" onclick="numpadKey('6')">6</button>
+        <button class="numpad-btn" onclick="numpadKey('7')">7</button>
+        <button class="numpad-btn" onclick="numpadKey('8')">8</button>
+        <button class="numpad-btn" onclick="numpadKey('9')">9</button>
+        <button class="numpad-btn zero" onclick="numpadKey('000')">000</button>
+        <button class="numpad-btn" onclick="numpadKey('0')">0</button>
+        <button class="numpad-btn confirm" onclick="numpadConfirm()">✓ OK</button>
+      </div>
+    </div>
+  `;
 }
 
 function showNumpad(targetInput) {
-  _numpadTarget = targetInput || null;
-  // Đọc giá trị hiện tại nếu có
-  if (targetInput && targetInput.value) {
-    _numpadRaw = String(parseInt(targetInput.value.replace(/[^0-9]/g,'')) || 0);
-    if (_numpadRaw === '0') _numpadRaw = '';
-  } else {
-    _numpadRaw = '';
-  }
-  document.getElementById('numpad-display').textContent = fmtNumpadDisplay(_numpadRaw) || '0';
-  document.getElementById('custom-numpad').classList.add('visible');
+  // Không dùng nữa — numpad render inline trong sheet
+}
+
+function initNumpadFromValue(val) {
+  _numpadRaw = String(parseInt(String(val).replace(/[^0-9]/g,'')) || 0);
+  // Giữ nguyên số thực, không reset về ''
+  const display = document.getElementById('numpad-display');
+  if (display) display.textContent = fmtNumpadDisplay(_numpadRaw) || '0';
+  // Sync hidden input
+  const hiddenAmt = document.getElementById('et-amt');
+  if (hiddenAmt) hiddenAmt.value = _numpadRaw;
 }
 
 function hideNumpad() {
-  document.getElementById('custom-numpad').classList.remove('visible');
-  _numpadTarget = null;
+  // Không cần nữa
 }
 
 // Format số với dấu phẩy khi nhập vào voice-input-box
