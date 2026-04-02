@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="Vochi">
 <link rel="apple-touch-icon" href="icon.png">
 <title>DuVochi — Voice Finance</title>
+<meta name="app-version" content="5">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 #calendar-header {
@@ -645,6 +646,22 @@ html.standalone #bottom-nav{
         <div class="setting-row"><div class="setting-lbl">Học từ lịch sử</div><span style="color:var(--mint);font-size:13px;font-weight:800">✓ Bật</span></div>
         <div class="setting-row"><div class="setting-lbl">Mẫu đã học</div><span id="learned-count" style="color:var(--text3);font-size:13px;font-weight:700">0 mẫu</span></div>
       </div>
+      <div class="settings-card">
+        <h3>Sao lưu dữ liệu</h3>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:12px;line-height:1.6;font-weight:500">
+          Nếu cần tạo lại bookmark trên iPhone, hãy <b>Export</b> trước để không mất dữ liệu.
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:0">
+          <button onclick="exportData()" style="flex:1;padding:11px;background:var(--mint-light);border:1.5px solid var(--mint);border-radius:var(--r12);color:var(--mint2);font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer">
+            📤 Export JSON
+          </button>
+          <label style="flex:1;padding:11px;background:var(--blue-light);border:1.5px solid var(--blue);border-radius:var(--r12);color:var(--blue);font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;text-align:center;display:flex;align-items:center;justify-content:center;gap:4px">
+            📥 Import JSON
+            <input type="file" accept=".json" onchange="importData(event)" style="display:none">
+          </label>
+        </div>
+        <div id="import-status" style="font-size:12px;margin-top:8px;color:var(--mint2);font-weight:600;min-height:16px;text-align:center"></div>
+      </div>
       <div class="settings-card"><h3>Dữ liệu</h3><button class="danger-btn" onclick="clearAllData()">Xoá tất cả dữ liệu</button></div>
       <div class="settings-pad"></div>
     </div>
@@ -699,23 +716,72 @@ const D = {
   nextSavId: 10
 };
 
+// ─── VERSION & MIGRATION ─────────────────────────────────────────────────────
+const APP_VERSION = 5; // tăng số này mỗi khi có thay đổi cấu trúc data
+
+function migrate(data, fromVersion) {
+  // v1→v2: thêm field nextSavId
+  if (fromVersion < 2) {
+    data.nextSavId = data.nextSavId || 10;
+  }
+  // v2→v3: thêm trường bucketId cho savings txns
+  if (fromVersion < 3) {
+    (data.txns || []).forEach(t => {
+      if (t.type === 'saving' && !t.bucketId) t.bucketId = null;
+    });
+  }
+  // v3→v4: thêm danh mục mặc định nếu thiếu
+  if (fromVersion < 4) {
+    if (!data.cats || data.cats.length === 0) {
+      data.cats = [
+        {id:1,name:'Ăn uống',emoji:'🍜'},{id:2,name:'Di chuyển',emoji:'🚗'},
+        {id:3,name:'Mua sắm',emoji:'🛒'},{id:4,name:'Sức khoẻ',emoji:'💊'},
+        {id:5,name:'Giải trí',emoji:'🎮'},{id:6,name:'Hoá đơn',emoji:'🧾'},
+        {id:7,name:'Học tập',emoji:'📚'},{id:8,name:'Khác',emoji:'📌'}
+      ];
+    }
+  }
+  // v4→v5: reset keywords về bộ mới không bị nhầm
+  if (fromVersion < 5) {
+    data.kw = {
+      exp: ['spend','chi','mua','trả'],
+      inc: ['income','thu nhập','lương','nhận tiền'],
+      sav: ['save','tiết kiệm','để dành','tích lũy']
+    };
+  }
+  data._version = APP_VERSION;
+  return data;
+}
+
 function load() {
   try {
     const s = localStorage.getItem('vochi2');
     if (s) {
       const p = JSON.parse(s);
-      Object.assign(D, p);
-      // Luôn dùng keywords mới nhất — tránh keywords cũ lỗi thời trong localStorage
+      const fromVersion = p._version || 1;
+      // Migrate nếu version cũ hơn
+      const migrated = fromVersion < APP_VERSION ? migrate(p, fromVersion) : p;
+      Object.assign(D, migrated);
+      // Luôn giữ keywords mới nhất
       D.kw = {
         exp: ['spend','chi','mua','trả'],
         inc: ['income','thu nhập','lương','nhận tiền'],
         sav: ['save','tiết kiệm','để dành','tích lũy']
       };
+      // Lưu lại sau migrate để không migrate lại lần sau
+      if (fromVersion < APP_VERSION) {
+        try { localStorage.setItem('vochi2', JSON.stringify(D)); } catch(e) {}
+      }
     }
-  } catch(e) {}
+  } catch(e) {
+    console.warn('Load error, keeping defaults:', e);
+  }
 }
 function persist() {
-  try { localStorage.setItem('vochi2', JSON.stringify(D)); } catch(e) {}
+  try {
+    D._version = APP_VERSION;
+    localStorage.setItem('vochi2', JSON.stringify(D));
+  } catch(e) {}
 }
 load();
 
@@ -1468,6 +1534,73 @@ function renderSavings() {
 }
 
 // ─── RENDER SETTINGS ─────────────────────────────────────────────────────────
+
+// ─── EXPORT / IMPORT ─────────────────────────────────────────────────────────
+function exportData() {
+  try {
+    const exportObj = {
+      _vochi_backup: true,
+      _version: APP_VERSION,
+      _exported_at: new Date().toISOString(),
+      txns: D.txns,
+      savings: D.savings,
+      cats: D.cats,
+      learned: D.learned,
+      nextId: D.nextId,
+      nextSavId: D.nextSavId,
+    };
+    const json = JSON.stringify(exportObj, null, 2);
+    const blob = new Blob([json], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const date = new Date().toISOString().slice(0,10);
+    a.href = url;
+    a.download = 'vochi-backup-' + date + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast('✅ Đã export! Lưu file vào Files app.');
+  } catch(e) {
+    toast('❌ Export thất bại: ' + e.message);
+  }
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data._vochi_backup) {
+        toast('❌ File không hợp lệ');
+        return;
+      }
+      // Merge: giữ lại data hiện tại nếu cần, hoặc replace hoàn toàn
+      if (data.txns)    D.txns    = data.txns;
+      if (data.savings) D.savings = data.savings;
+      if (data.cats)    D.cats    = data.cats;
+      if (data.learned) D.learned = data.learned;
+      if (data.nextId)    D.nextId    = data.nextId;
+      if (data.nextSavId) D.nextSavId = data.nextSavId;
+      persist();
+      renderDashboard();
+      renderAllTxns();
+      renderSavings();
+      renderSettings();
+      const count = (data.txns || []).length;
+      document.getElementById('import-status').textContent = '✅ Import thành công — ' + count + ' giao dịch';
+      toast('✅ Đã import ' + count + ' giao dịch!');
+    } catch(err) {
+      toast('❌ File lỗi: ' + err.message);
+    }
+    // Reset input để có thể import lại cùng file
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
 function renderSettings() {
   document.getElementById('kw-exp').value = (D.kw.exp||[]).join(',');
   document.getElementById('kw-inc').value = (D.kw.inc||[]).join(',');
@@ -1784,5 +1917,48 @@ function htmlEsc(s) {
 renderDashboard();
 renderSavings();
 </script>
+
+<!-- ── UPDATE CHECKER ── -->
+<div id="update-bar" style="
+  display:none;position:fixed;top:0;left:0;right:0;
+  background:linear-gradient(90deg,#2d8a5e,#4CAF82);
+  color:#fff;padding:12px 20px;
+  display:none;align-items:center;justify-content:space-between;
+  font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;
+  z-index:999;box-shadow:0 4px 16px rgba(0,0,0,.2);
+  animation:slideDown .3s cubic-bezier(.4,0,.2,1);
+" id="update-bar">
+  <span>🎉 Có phiên bản mới!</span>
+  <button onclick="doReload()" style="
+    background:rgba(255,255,255,.25);border:1.5px solid rgba(255,255,255,.5);
+    border-radius:20px;color:#fff;padding:6px 16px;
+    font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer;
+  ">Cập nhật ngay</button>
+</div>
+<style>
+@keyframes slideDown{from{transform:translateY(-100%)}to{transform:translateY(0)}}
+</style>
+
+<script>
+// Kiểm tra version mỗi lần mở app
+const CURRENT_BUILD = '202604020952';
+const STORED_BUILD  = localStorage.getItem('vochi_build');
+
+function doReload() {
+  localStorage.setItem('vochi_build', CURRENT_BUILD);
+  // Hard reload — bỏ qua cache
+  window.location.href = window.location.href.split('?')[0] + '?v=' + CURRENT_BUILD;
+}
+
+if (STORED_BUILD && STORED_BUILD !== CURRENT_BUILD) {
+  // Có version mới — hiển thị bar
+  const bar = document.getElementById('update-bar');
+  if (bar) bar.style.display = 'flex';
+} else {
+  // Lần đầu hoặc đã đúng version — lưu build
+  localStorage.setItem('vochi_build', CURRENT_BUILD);
+}
+</script>
+
 </body>
 </html>
