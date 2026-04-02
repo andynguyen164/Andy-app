@@ -2104,23 +2104,35 @@ renderSavings();
 </style>
 
 <script>
-// Kiểm tra version mỗi lần mở app
-const CURRENT_BUILD = '202604020952';
-const STORED_BUILD  = localStorage.getItem('vochi_build');
+// Kiểm tra update bằng cách fetch Last-Modified header của chính file này
+// Không cần hardcode build number — tự động phát hiện khi GitHub deploy
+(function checkUpdate() {
+  const STORED = localStorage.getItem('vochi_last_modified');
+  const url = window.location.href.split('?')[0];
+
+  fetch(url, { method: 'HEAD', cache: 'no-store' })
+    .then(res => {
+      const lastMod = res.headers.get('Last-Modified') || res.headers.get('ETag') || '';
+      if (!lastMod) return;
+
+      if (STORED && STORED !== lastMod) {
+        // File đã thay đổi trên server → hiện banner
+        const bar = document.getElementById('update-bar');
+        if (bar) bar.style.display = 'flex';
+        // Lưu value mới để lần sau so sánh
+        localStorage.setItem('vochi_last_modified', lastMod);
+      } else if (!STORED) {
+        // Lần đầu mở → lưu lại, không hiện banner
+        localStorage.setItem('vochi_last_modified', lastMod);
+      }
+    })
+    .catch(() => {}); // offline hoặc lỗi → bỏ qua
+})();
 
 function doReload() {
-  localStorage.setItem('vochi_build', CURRENT_BUILD);
-  // Hard reload — bỏ qua cache
-  window.location.href = window.location.href.split('?')[0] + '?v=' + CURRENT_BUILD;
-}
-
-if (STORED_BUILD && STORED_BUILD !== CURRENT_BUILD) {
-  // Có version mới — hiển thị bar
-  const bar = document.getElementById('update-bar');
-  if (bar) bar.style.display = 'flex';
-} else {
-  // Lần đầu hoặc đã đúng version — lưu build
-  localStorage.setItem('vochi_build', CURRENT_BUILD);
+  // Xoá cache bằng cách thêm timestamp vào URL
+  const base = window.location.href.split('?')[0];
+  window.location.href = base + '?reload=' + Date.now();
 }
 </script>
 
