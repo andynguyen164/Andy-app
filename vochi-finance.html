@@ -217,19 +217,43 @@ html,body{
 .sec-title{font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;color:var(--dark)}
 .sec-link{font-size:12px;color:var(--mint);font-weight:700;cursor:pointer}
 .txn-list{display:flex;flex-direction:column;gap:8px;padding:0 20px}
-.txn-wrap{position:relative;overflow:hidden;border-radius:var(--r20)}
-.txn-delete-bg{position:absolute;inset:0;background:var(--red-light);border-radius:var(--r20);display:flex;align-items:center;justify-content:flex-end;padding-right:20px}
-.txn-item{background:var(--white);border-radius:var(--r20);padding:13px 15px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .2s;position:relative;z-index:1;box-shadow:var(--shadow)}
-.txn-item:hover{box-shadow:var(--shadow2);transform:translateY(-1px)}
-.txn-item.deleting{animation:swipeOut .28s ease forwards}
+/* ── SWIPE TXN ── */
+.txn-wrap{
+  position:relative;border-radius:var(--r20);
+  overflow:hidden;user-select:none;
+}
+/* Nền trái (edit - xanh) và phải (xoá - đỏ) */
+.txn-bg-left{
+  position:absolute;inset:0;
+  background:linear-gradient(90deg,#3a9e72,#4CAF82);
+  border-radius:var(--r20);
+  display:flex;align-items:center;padding-left:22px;gap:8px;
+  color:#fff;font-size:13px;font-weight:800;
+}
+.txn-bg-right{
+  position:absolute;inset:0;
+  background:linear-gradient(90deg,#f05a54,#e8504a);
+  border-radius:var(--r20);
+  display:flex;align-items:center;justify-content:flex-end;padding-right:22px;gap:8px;
+  color:#fff;font-size:13px;font-weight:800;
+}
+.txn-item{
+  background:var(--white);border-radius:var(--r20);
+  padding:13px 15px;display:flex;align-items:center;gap:12px;
+  cursor:pointer;position:relative;z-index:1;box-shadow:var(--shadow);
+  /* Không dùng transition CSS — JS sẽ control transform */
+  will-change:transform;
+  touch-action:pan-y; /* chỉ block horizontal swipe, giữ vertical scroll */
+}
+.txn-item.snapping{transition:transform .2s cubic-bezier(.4,0,.2,1);}
+.txn-item.deleting{animation:swipeOut .25s ease forwards}
 @keyframes swipeOut{to{transform:translateX(110%);opacity:0}}
 .txn-icon{width:42px;height:42px;border-radius:var(--r16);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
 .txn-body{flex:1;min-width:0}
 .txn-desc{font-weight:700;font-size:13px;color:var(--dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.1px}
 .txn-meta{font-size:10px;color:var(--text3);margin-top:3px;font-weight:500;letter-spacing:.2px}
 .txn-amt{font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;white-space:nowrap;flex-shrink:0;letter-spacing:-.5px}
-.del-btn{width:30px;height:30px;border-radius:50%;background:var(--red-light);border:none;color:var(--red);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;opacity:0;transform:scale(.8)}
-.txn-item:hover .del-btn{opacity:1;transform:scale(1)}
+/* del-btn removed — dùng swipe thay thế */
 .cat-tag{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;background:var(--mint-light);color:var(--mint2);font-weight:700}
 .empty-msg{text-align:center;padding:36px 20px;color:var(--text3);font-size:13px;line-height:1.7;font-weight:500}
 .empty-icon{font-size:40px;display:block;margin-bottom:12px}
@@ -417,6 +441,47 @@ html.standalone #bottom-nav{
 .ie-amt{font-family:'Nunito',sans-serif;font-size:18px;font-weight:900;letter-spacing:-.5px}
 .ie-sub{font-size:10px;color:var(--text3);font-weight:500;margin-top:3px}
 
+
+/* ── MONTHLY CHART ── */
+.monthly-section{margin:12px 20px 0;background:var(--white);border-radius:var(--r20);padding:16px 18px;box-shadow:var(--shadow)}
+.monthly-bars{display:flex;align-items:flex-end;gap:6px;height:100px;margin:12px 0 6px}
+.monthly-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0}
+.monthly-bar-wrap{width:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:84px;gap:2px}
+.monthly-bar{width:100%;border-radius:4px 4px 0 0;min-height:3px;transition:height .6s cubic-bezier(.4,0,.2,1)}
+.monthly-bar.inc{background:linear-gradient(180deg,#6fcfa0,var(--mint))}
+.monthly-bar.exp{background:linear-gradient(180deg,#f0837e,var(--red))}
+.monthly-label{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.3px;white-space:nowrap}
+.monthly-label.current{color:var(--mint);font-weight:800}
+.monthly-col.active .monthly-bar-wrap{opacity:1}
+.monthly-col .monthly-bar-wrap{opacity:.85;transition:opacity .15s}
+.monthly-col.active .monthly-bar-wrap{opacity:1}
+.monthly-col.active .monthly-label{color:var(--dark)}
+/* Popup số tiền khi tap */
+.monthly-popup{
+  position:absolute;background:var(--dark);color:#fff;
+  border-radius:10px;padding:7px 10px;font-size:10px;font-weight:700;
+  white-space:nowrap;pointer-events:none;z-index:10;
+  transform:translateX(-50%);bottom:calc(100% + 6px);left:50%;
+  box-shadow:0 4px 12px rgba(0,0,0,.2);
+  display:none;
+}
+.monthly-popup::after{
+  content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);
+  border:4px solid transparent;border-top-color:var(--dark);
+}
+.monthly-col{position:relative}
+.monthly-col.active .monthly-popup{display:block}
+/* Amount bên dưới label */
+.monthly-amt{font-size:8px;font-weight:700;color:var(--text3);white-space:nowrap;display:none}
+.monthly-col.active .monthly-amt{display:block;color:var(--red)}
+.monthly-legend{display:flex;gap:14px;margin-top:6px}
+.ml-item{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:700;color:var(--text3)}
+.ml-dot{width:8px;height:8px;border-radius:2px}
+.monthly-net-row{display:flex;justify-content:space-between;padding:10px 0 0;border-top:1px solid var(--border);margin-top:4px}
+.net-item{text-align:center}
+.net-lbl{font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);margin-bottom:3px}
+.net-val{font-size:13px;font-weight:800;font-family:'Nunito',sans-serif;letter-spacing:-.3px}
+
 </style>
 </head>
 <body>
@@ -523,6 +588,17 @@ html.standalone #bottom-nav{
           <div class="ie-amt" style="color:var(--red)">₫<span id="st-expense">0</span></div>
           <div class="ie-sub" id="st-expense-count">0 giao dịch</div>
         </div>
+      </div>
+
+      <!-- Monthly trend -->
+      <div class="monthly-section">
+        <div class="chart-title">6 tháng gần đây</div>
+        <div class="monthly-bars" id="monthly-bars"></div>
+        <div class="monthly-legend">
+          <div class="ml-item"><div class="ml-dot" style="background:var(--mint)"></div>Thu nhập</div>
+          <div class="ml-item"><div class="ml-dot" style="background:var(--red)"></div>Chi tiêu</div>
+        </div>
+        <div class="monthly-net-row" id="monthly-net-row"></div>
       </div>
 
       <div class="chart-section">
@@ -1115,17 +1191,147 @@ function txnHTML(t) {
   const sign = t.type==='income' ? '+' : '-';
   const catTag = cat ? `<span class="cat-tag">${cat.name}</span>` : '';
   return `<div class="txn-wrap" id="wrap-${t.id}">
-    <div class="txn-delete-bg"><span style="font-size:20px">🗑️</span></div>
-    <div class="txn-item" id="txn-${t.id}">
+    <div class="txn-bg-left">✏️ <span>Sửa</span></div>
+    <div class="txn-bg-right"><span>Xoá</span> 🗑️</div>
+    <div class="txn-item" id="txn-${t.id}"
+      ontouchstart="swipeStart(event,${t.id})"
+      ontouchmove="swipeMove(event,${t.id})"
+      ontouchend="swipeEnd(event,${t.id})">
       <div class="txn-icon" style="${iconBg}">${icon}</div>
       <div class="txn-body">
         <div class="txn-desc">${htmlEsc(t.desc)}</div>
         <div class="txn-meta">${fmtDate(t.ts)} ${catTag}</div>
       </div>
       <div class="txn-amt" style="color:${color}">${sign}${fmt(t.amount)}</div>
-      <button class="del-btn" onclick="deleteTxn(${t.id},event)">✕</button>
     </div>
   </div>`;
+}
+
+
+// ── SWIPE TO DELETE / EDIT ─────────────────────────────────────────────────
+const _swipe = {}; // state per txn id
+const SWIPE_THRESHOLD = 72; // px để trigger action
+
+function swipeStart(e, id) {
+  const touch = e.touches[0];
+  _swipe[id] = {
+    startX: touch.clientX,
+    startY: touch.clientY,
+    dx: 0,
+    isHorizontal: null,
+    triggered: false
+  };
+}
+
+function swipeMove(e, id) {
+  const s = _swipe[id]; if (!s) return;
+  const touch = e.touches[0];
+  const dx = touch.clientX - s.startX;
+  const dy = touch.clientY - s.startY;
+
+  // Xác định hướng swipe lần đầu
+  if (s.isHorizontal === null) {
+    if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+    s.isHorizontal = Math.abs(dx) > Math.abs(dy);
+  }
+  if (!s.isHorizontal) return; // vertical scroll → bỏ qua
+
+  e.preventDefault(); // chặn scroll khi đang swipe ngang
+  s.dx = dx;
+
+  const el = document.getElementById('txn-' + id);
+  if (!el) return;
+
+  // Giới hạn kéo: trái tối đa -140px, phải tối đa +100px
+  const clamped = Math.max(-140, Math.min(100, dx));
+  el.style.transform = `translateX(${clamped}px)`;
+
+  // Visual feedback — highlight bg khi qua threshold
+  const wrap = document.getElementById('wrap-' + id);
+  if (wrap) {
+    wrap.querySelector('.txn-bg-right').style.opacity = dx < -SWIPE_THRESHOLD ? '1' : '0.6';
+    wrap.querySelector('.txn-bg-left').style.opacity  = dx >  SWIPE_THRESHOLD ? '1' : '0.6';
+  }
+}
+
+function swipeEnd(e, id) {
+  const s = _swipe[id]; if (!s) return;
+  const el = document.getElementById('txn-' + id);
+  if (!el) { delete _swipe[id]; return; }
+
+  el.classList.add('snapping');
+
+  if (s.dx < -SWIPE_THRESHOLD) {
+    // Quẹt trái → XOÁ
+    el.style.transform = 'translateX(-110%)';
+    setTimeout(() => { deleteTxn(id); }, 220);
+  } else if (s.dx > SWIPE_THRESHOLD) {
+    // Quẹt phải → SỬA
+    el.style.transform = 'translateX(0)';
+    showEditTxnSheet(id);
+  } else {
+    // Chưa đủ → snap về 0
+    el.style.transform = 'translateX(0)';
+  }
+
+  // Reset opacity backgrounds
+  const wrap = document.getElementById('wrap-' + id);
+  if (wrap) {
+    wrap.querySelector('.txn-bg-right').style.opacity = '';
+    wrap.querySelector('.txn-bg-left').style.opacity  = '';
+  }
+
+  setTimeout(() => el.classList.remove('snapping'), 220);
+  delete _swipe[id];
+}
+
+function showEditTxnSheet(id) {
+  const t = D.txns.find(x => x.id === id);
+  if (!t) return;
+  const cat = t.cat ? getCat(t.cat) : null;
+  showSheet(`
+    <div class="sheet-title">Sửa giao dịch</div>
+    <div class="sheet-sub">${fmtDate(t.ts)}</div>
+    <input id="et-desc" class="modal-input" placeholder="Mô tả" value="${htmlEsc(t.desc)}">
+    <input id="et-amt" class="modal-input" type="number" placeholder="Số tiền (₫)" value="${t.amount}">
+    ${t.type === 'expense' ? `
+    <div style="margin-bottom:10px;font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.5px;text-transform:uppercase">Danh mục</div>
+    <div class="cat-grid">${D.cats.map(c => `<div class="cat-btn${c.id===(t.cat||8)?' selected':''}" id="et-cb${c.id}" onclick="pickEditCat(${c.id})"><span class="cat-emoji">${c.emoji}</span><span class="cat-name">${htmlEsc(c.name)}</span></div>`).join('')}</div>
+    ` : ''}
+    <button class="confirm-btn" onclick="saveEditTxn(${id})">Lưu thay đổi</button>
+    <button onclick="deleteTxn(${id});closeSheet();" style="width:100%;margin-top:10px;padding:12px;background:var(--red-light);border:1.5px solid #ffc5c3;border-radius:var(--r12);color:var(--red);font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">🗑️ Xoá giao dịch</button>
+  `);
+}
+
+let _editCat = null;
+function pickEditCat(id) {
+  _editCat = id;
+  document.querySelectorAll('[id^="et-cb"]').forEach(b => b.classList.remove('selected'));
+  document.getElementById('et-cb' + id)?.classList.add('selected');
+}
+
+function saveEditTxn(id) {
+  const t = D.txns.find(x => x.id === id);
+  if (!t) return;
+  const desc = document.getElementById('et-desc').value.trim() || t.desc;
+  const amount = parseFloat(document.getElementById('et-amt').value) || t.amount;
+  const cat = _editCat || t.cat;
+
+  // Nếu là saving, điều chỉnh bucket
+  if (t.type === 'saving' && t.bucketId) {
+    const g = D.savings.find(s => s.id === t.bucketId);
+    if (g) g.current = Math.max(0, g.current - t.amount + amount);
+  }
+
+  t.desc = desc;
+  t.amount = amount;
+  if (t.type === 'expense') t.cat = cat;
+  persist();
+  closeSheet();
+  renderDashboard();
+  renderAllTxns();
+  renderSavings();
+  toast('✅ Đã cập nhật giao dịch');
 }
 
 function deleteTxn(id, e) {
@@ -1343,7 +1549,90 @@ function getStatsTxns() {
   return D.txns;
 }
 
+
+function renderMonthly() {
+  const now = new Date();
+  const months = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({
+      year: d.getFullYear(),
+      month: d.getMonth(),
+      label: 'T' + (d.getMonth() + 1),
+      isCurrent: i === 0
+    });
+  }
+
+  // Tính income/expense cho từng tháng
+  const data = months.map(m => {
+    const txns = D.txns.filter(t => {
+      const d = new Date(t.ts);
+      return d.getMonth() === m.month && d.getFullYear() === m.year;
+    });
+    return {
+      ...m,
+      inc: txns.filter(t => t.type === 'income').reduce((a, t) => a + t.amount, 0),
+      exp: txns.filter(t => t.type === 'expense').reduce((a, t) => a + t.amount, 0),
+    };
+  });
+
+  const maxVal = Math.max(...data.map(d => Math.max(d.inc, d.exp)), 1);
+
+  // Render bars
+  const barsEl = document.getElementById('monthly-bars');
+  barsEl.innerHTML = data.map((m, idx) => {
+    const incH = Math.round((m.inc / maxVal) * 80);
+    const expH = Math.round((m.exp / maxVal) * 80);
+    const hasData = m.inc > 0 || m.exp > 0;
+    // Popup nội dung
+    const popupLines = [];
+    if (m.inc > 0) popupLines.push(`<span style="color:#6fcfa0">↑ ${fmt(m.inc)}</span>`);
+    if (m.exp > 0) popupLines.push(`<span style="color:#f0837e">↓ ${fmt(m.exp)}</span>`);
+    const popupHtml = hasData ? popupLines.join('<br>') : 'Không có dữ liệu';
+
+    return `<div class="monthly-col${m.isCurrent ? ' active' : ''}" onclick="toggleMonthlyCol(this)">
+      <div class="monthly-popup">${popupHtml}</div>
+      <div class="monthly-bar-wrap">
+        ${m.inc > 0 ? `<div class="monthly-bar inc" style="height:${incH}px"></div>` : ''}
+        ${m.exp > 0 ? `<div class="monthly-bar exp" style="height:${expH}px"></div>` : ''}
+        ${!hasData ? `<div style="height:3px;width:100%;background:var(--border);border-radius:2px;margin-bottom:0"></div>` : ''}
+      </div>
+      <div class="monthly-label${m.isCurrent ? ' current' : ''}">${m.label}</div>
+      ${m.exp > 0 ? `<div class="monthly-amt">${fmt(m.exp)}</div>` : ''}
+    </div>`;
+  }).join('');
+
+  // Net row — chỉ tháng hiện tại và tháng trước
+  const cur = data[5], prev = data[4];
+  const net = cur.inc - cur.exp;
+  const prevNet = prev.inc - prev.exp;
+  const diff = net - prevNet;
+  const diffSign = diff >= 0 ? '+' : '';
+  const netEl = document.getElementById('monthly-net-row');
+  netEl.innerHTML = `
+    <div class="net-item">
+      <div class="net-lbl">Thu tháng này</div>
+      <div class="net-val" style="color:var(--mint2)">${fmt(cur.inc)}</div>
+    </div>
+    <div class="net-item">
+      <div class="net-lbl">Chi tháng này</div>
+      <div class="net-val" style="color:var(--red)">${fmt(cur.exp)}</div>
+    </div>
+    <div class="net-item">
+      <div class="net-lbl">So tháng trước</div>
+      <div class="net-val" style="color:${diff >= 0 ? 'var(--mint2)' : 'var(--red)'}">${diffSign}${fmt(Math.abs(diff))}</div>
+    </div>
+  `;
+}
+
+function toggleMonthlyCol(el) {
+  // Deactivate all, activate tapped
+  document.querySelectorAll('#monthly-bars .monthly-col').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+
 function renderStats() {
+  renderMonthly();
   const txns = getStatsTxns();
   const periodLabels = {week:'Tuần này',month:'Tháng này',last_month:'Tháng trước',all:'Tất cả'};
   document.getElementById('st-period-label').textContent = periodLabels[_statsPeriod];
