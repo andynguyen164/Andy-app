@@ -401,6 +401,15 @@ html.standalone #bottom-nav{
 }
 html.standalone #quick-prompts.open{ max-height:150px; }
 
+/* Standalone: tất cả hero dùng padding-top = status bar height thực tế */
+html.standalone .dash-hero,
+html.standalone .txn-page-top,
+html.standalone .sav-hero,
+html.standalone .stats-hero,
+html.standalone .settings-hero {
+  padding-top: max(52px, calc(env(safe-area-inset-top) + 20px));
+}
+
 /* TOAST */
 #toast{position:absolute;top:70px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--dark);border-radius:var(--r20);padding:12px 22px;font-size:13px;font-weight:700;color:#fff;white-space:nowrap;z-index:200;transition:all .3s cubic-bezier(.4,0,.2,1);opacity:0;pointer-events:none;max-width:300px;text-align:center;box-shadow:0 10px 30px rgba(26,46,34,.35)}
 #toast.show{transform:translateX(-50%) translateY(0);opacity:1}
@@ -408,9 +417,11 @@ html.standalone #quick-prompts.open{ max-height:150px; }
 /* ─────────────────────────────
    STATS / ANALYTICS
 ───────────────────────────── */
-.stats-hero{background:linear-gradient(150deg,#2d8a5e 0%,var(--mint) 100%);padding:52px 24px 24px;border-radius:0 0 var(--r44) var(--r44);}
-@media screen and (max-width:500px){
-  .stats-hero{padding-top:max(52px,calc(env(safe-area-inset-top)+16px));}
+.stats-hero{
+  background:linear-gradient(150deg,#2d8a5e 0%,var(--mint) 100%);
+  padding:52px 24px 24px;
+  padding-top:max(52px, calc(env(safe-area-inset-top) + 16px));
+  border-radius:0 0 var(--r44) var(--r44);
 }
 .stats-hero-lbl{font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,.65);margin-bottom:6px}
 .stats-hero-amt{font-family:'Nunito',sans-serif;font-size:34px;font-weight:900;color:#fff;letter-spacing:-1.5px;margin-bottom:2px}
@@ -2148,15 +2159,39 @@ function htmlEsc(s) {
 
   if (isStandalone) {
     document.documentElement.classList.add('standalone');
-    // Dùng 100dvh thay vì window.innerHeight — chính xác hơn trên iOS
+
+    // Dùng window.innerHeight — chính xác nhất cho PWA iOS
     const phone = document.getElementById('phone');
-    if (phone) {
-      phone.style.height = '100dvh';
-      // Fallback nếu dvh không support
-      if (!CSS.supports('height', '100dvh')) {
-        phone.style.height = window.innerHeight + 'px';
+    const setH = () => {
+      if (phone) phone.style.height = window.innerHeight + 'px';
+    };
+    setH();
+    window.addEventListener('resize', setH);
+
+    // Đo safe-area-inset-bottom thực tế bằng div ruler
+    const ruler = document.createElement('div');
+    ruler.style.cssText = 'position:fixed;bottom:0;left:0;width:1px;' +
+      'height:env(safe-area-inset-bottom,0px);pointer-events:none;visibility:hidden;';
+    document.body.appendChild(ruler);
+
+    requestAnimationFrame(() => {
+      const safeH = ruler.getBoundingClientRect().height || 0;
+      document.body.removeChild(ruler);
+
+      const vbar = document.getElementById('voice-bar');
+      const bnav = document.getElementById('bottom-nav');
+
+      if (vbar) {
+        vbar.style.paddingTop    = '8px';
+        vbar.style.paddingBottom = Math.max(safeH, 4) + 'px';
+        vbar.style.paddingLeft   = '16px';
+        vbar.style.paddingRight  = '16px';
       }
-    }
+      if (bnav) {
+        bnav.style.paddingTop    = '4px';
+        bnav.style.paddingBottom = Math.max(safeH, 4) + 'px';
+      }
+    });
   }
 })();
 
