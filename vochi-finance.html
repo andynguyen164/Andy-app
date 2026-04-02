@@ -1542,7 +1542,7 @@ function showEditTxnSheet(id) {
     <div class="sheet-title">Sửa giao dịch</div>
     <div class="sheet-sub">${fmtDate(t.ts)}</div>
     <input id="et-desc" class="modal-input" placeholder="Mô tả" value="${htmlEsc(t.desc)}">
-    <input id="et-amt" class="modal-input" type="number" placeholder="Số tiền (₫)" value="${t.amount}">
+    <input id="et-amt" class="modal-input" type="text" inputmode="decimal" placeholder="VD: 20k, 1.5tr, 50000" value="${t.amount}">
     ${t.type === 'expense' ? `
     <div style="margin-bottom:10px;font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.5px;text-transform:uppercase">Danh mục</div>
     <div class="cat-grid">${D.cats.map(c => `<div class="cat-btn${c.id===(t.cat||8)?' selected':''}" id="et-cb${c.id}" onclick="pickEditCat(${c.id})"><span class="cat-emoji">${c.emoji}</span><span class="cat-name">${htmlEsc(c.name)}</span></div>`).join('')}</div>
@@ -1582,8 +1582,8 @@ function saveEditTxn(id) {
 
   // Cập nhật các trường — giữ giá trị cũ nếu input rỗng
   const newDesc   = (descVal !== undefined && descVal.trim() !== '') ? descVal.trim() : t.desc;
-  const newAmount = (amtVal  !== undefined && amtVal.trim()  !== '' && !isNaN(parseFloat(amtVal)))
-                    ? parseFloat(amtVal) : t.amount;
+  const newAmount = (amtVal !== undefined && amtVal.trim() !== '')
+                    ? (parseAmt(amtVal) || t.amount) : t.amount;
   const newCat    = (catVal  !== undefined && catVal !== '' && !isNaN(parseInt(catVal)))
                     ? parseInt(catVal) : t.cat;
 
