@@ -1455,6 +1455,7 @@ const _swipe = {}; // state per txn id
 const SWIPE_THRESHOLD = 72; // px để trigger action
 
 function swipeStart(e, id) {
+  id = String(id); // normalize key
   const touch = e.touches[0];
   _swipe[id] = {
     startX: touch.clientX,
@@ -1466,6 +1467,7 @@ function swipeStart(e, id) {
 }
 
 function swipeMove(e, id) {
+  id = String(id); // normalize key
   const s = _swipe[id]; if (!s) return;
   const touch = e.touches[0];
   const dx = touch.clientX - s.startX;
@@ -1497,6 +1499,7 @@ function swipeMove(e, id) {
 }
 
 function swipeEnd(e, id) {
+  id = String(id); // normalize key
   const s = _swipe[id]; if (!s) return;
   const el = document.getElementById('txn-' + id);
   if (!el) { delete _swipe[id]; return; }
@@ -1550,7 +1553,7 @@ function showEditTxnSheet(id) {
 
   // Lưu cat hiện tại vào data attribute để saveEditTxn đọc
   document.getElementById('sheet-body').dataset.editCat = currentEditCat;
-  document.getElementById('sheet-body').dataset.editId  = id;
+  document.getElementById('sheet-body').dataset.editId  = String(id);
 }
 
 function pickEditCat(catId) {
@@ -1562,27 +1565,34 @@ function pickEditCat(catId) {
 }
 
 function saveEditTxn(id) {
-  const t = D.txns.find(x => x.id === id);
-  if (!t) return;
+  const numId = Number(id);
+  const t = D.txns.find(x => Number(x.id) === numId);
+  if (!t) { toast('❌ Không tìm thấy giao dịch (id=' + id + ')'); return; }
 
-  const descEl  = document.getElementById('et-desc');
-  const amtEl   = document.getElementById('et-amt');
-  const body    = document.getElementById('sheet-body');
+  // Đọc tất cả giá trị TRƯỚC khi thay đổi t
+  const descEl   = document.getElementById('et-desc');
+  const amtEl    = document.getElementById('et-amt');
+  const body     = document.getElementById('sheet-body');
 
-  const desc   = descEl  ? (descEl.value.trim()  || t.desc)   : t.desc;
-  const amount = amtEl   ? (parseFloat(amtEl.value) || t.amount) : t.amount;
-  // Đọc cat từ dataset — không bị ảnh hưởng bởi sheet khác
-  const cat    = body    ? (parseInt(body.dataset.editCat) || t.cat) : t.cat;
+  const newDesc   = descEl ? descEl.value.trim() : t.desc;
+  const newAmount = amtEl  ? parseFloat(amtEl.value) : NaN;
+  const newCat    = body   ? parseInt(body.dataset.editCat) : t.cat;
+  const oldAmount = t.amount;
 
-  // Nếu là saving, điều chỉnh số dư bucket
-  if (t.type === 'saving' && t.bucketId) {
-    const g = D.savings.find(s => s.id === t.bucketId);
-    if (g) g.current = Math.max(0, g.current - t.amount + amount);
+  // Update saving bucket trước khi ghi đè amount
+  if (t.type === 'saving' && t.bucketId && !isNaN(newAmount) && newAmount > 0) {
+    const g = D.savings.find(s => Number(s.id) === Number(t.bucketId));
+    if (g) g.current = Math.max(0, g.current - oldAmount + newAmount);
   }
 
-  t.desc   = desc;
-  t.amount = amount;
-  if (t.type === 'expense') t.cat = cat;
+  // Ghi đè — dùng fallback về giá trị cũ nếu input rỗng/không hợp lệ
+  t.desc   = newDesc || t.desc;
+  t.amount = (!isNaN(newAmount) && newAmount > 0) ? newAmount : t.amount;
+  if (t.type === 'expense') t.cat = (!isNaN(newCat) && newCat > 0) ? newCat : t.cat;
+
+  // Force update reference trong array (tránh mutation issue)
+  const idx = D.txns.findIndex(x => Number(x.id) === numId);
+  if (idx !== -1) D.txns[idx] = { ...t };
 
   persist();
   closeSheet();
@@ -1594,7 +1604,7 @@ function saveEditTxn(id) {
 
 function deleteTxn(id, e) {
   if (e) e.stopPropagation();
-  const txn = D.txns.find(t => t.id===id);
+  const txn = D.txns.find(t => Number(t.id)===Number(id));
   if (!txn) return;
   if (txn.type==='saving' && txn.bucketId) {
     const g = D.savings.find(s => s.id===txn.bucketId);
