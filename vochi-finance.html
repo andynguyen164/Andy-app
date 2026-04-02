@@ -535,6 +535,74 @@ html.standalone #bottom-nav{
   transform:rotate(180deg);
 }
 
+
+/* ── NIGHT MODE (sau 18h) ── */
+body.night-mode{
+  --bg:#1a2440;
+  --white:#222d4e;
+  --dark:#e8edf8;
+  --dark2:#c5ceea;
+  --text:#e8edf8;
+  --text2:#a0b0d0;
+  --text3:#607090;
+  --border:#2e3d62;
+  --mint:#4a7fd4;
+  --mint2:#3a6bbf;
+  --mint-light:#1e2e50;
+  --mint-xlight:#1a2540;
+  --bg-card:#222d4e;
+  --shadow:0 2px 12px rgba(0,0,0,.3);
+  --shadow2:0 6px 24px rgba(0,0,0,.4);
+  background:#16203a;
+}
+body.night-mode #phone{background:#1a2440;}
+body.night-mode .dash-hero{background:#222d4e;}
+body.night-mode .balance-card{background:linear-gradient(140deg,#2C4D9C 0%,#1a3070 100%);}
+body.night-mode .stat-card,
+body.night-mode .ai-card,
+body.night-mode .txn-item,
+body.night-mode .saving-card,
+body.night-mode .settings-card,
+body.night-mode .chart-section,
+body.night-mode .cat-bars-section,
+body.night-mode .monthly-section,
+body.night-mode .ie-card,
+body.night-mode .ps-item{background:#222d4e;}
+body.night-mode #voice-bar,
+body.night-mode #bottom-nav,
+body.night-mode #quick-prompts{background:#1e2848;}
+body.night-mode .filter-btn{border-color:#2e3d62;color:#a0b0d0;}
+body.night-mode .filter-btn.active{background:#2C4D9C;border-color:#2C4D9C;}
+body.night-mode .txn-page-top,
+body.night-mode .sav-hero + *,
+body.night-mode .settings-hero{background:#222d4e;}
+body.night-mode .txn-page-top{background:#222d4e;}
+body.night-mode .settings-hero{background:#222d4e;}
+body.night-mode .sav-hero{background:linear-gradient(160deg,#2C4D9C,#1a3070);}
+body.night-mode .stats-hero{background:linear-gradient(150deg,#1a3070,#2C4D9C);}
+body.night-mode .voice-row #voice-input-box{background:#16203a;border-color:#2e3d62;color:#e8edf8;}
+body.night-mode .qp-chip{background:#16203a;border-color:#2e3d62;color:#a0b0d0;}
+body.night-mode .cat-btn{background:#16203a;border-color:#2e3d62;}
+body.night-mode .modal-input{background:#16203a;border-color:#2e3d62;color:#e8edf8;}
+body.night-mode .sheet{background:#222d4e;}
+body.night-mode #toast{background:#2C4D9C;}
+body.night-mode .nav-item.active .nav-icon{background:#1e2d54;}
+body.night-mode .monthly-bar-track,
+body.night-mode .cat-bar-track{background:#16203a;}
+body.night-mode .saving-progress{background:#16203a;}
+body.night-mode .bucket-btn,
+body.night-mode .goal-btn{background:#16203a;border-color:#2e3d62;color:#a0b0d0;}
+body.night-mode .txn-bg-left{background:linear-gradient(90deg,#1a3a6a,#2C4D9C);}
+body.night-mode .txn-bg-right{background:linear-gradient(90deg,#6a1a1a,#b03030);}
+body.night-mode #main{background:#1a2440;}
+/* Night indicator nhỏ ở góc */
+#night-indicator{
+  position:fixed;bottom:0;right:0;
+  font-size:10px;font-weight:700;
+  color:rgba(255,255,255,.0);
+  pointer-events:none;
+}
+
 </style>
 </head>
 <body>
@@ -933,9 +1001,18 @@ function filterByDate(date) {
 // ─── GREETING ────────────────────────────────────────────────────────────────
 function setGreeting() {
   const h = new Date().getHours();
-  document.getElementById('greet-text').textContent = h < 12 ? 'Chào buổi sáng ☀️' : h < 18 ? 'Buổi chiều vui vẻ 🌤' : 'Buổi tối bình yên 🌙';
+  const isNight = h >= 18 || h < 6;
+  document.getElementById('greet-text').textContent =
+    h < 6  ? 'Đêm khuya rồi 🌙' :
+    h < 12 ? 'Chào buổi sáng ☀️' :
+    h < 18 ? 'Buổi chiều vui vẻ 🌤' :
+             'Buổi tối bình yên 🌙';
+  // Áp night mode nếu là buổi tối (18h - 6h sáng)
+  document.body.classList.toggle('night-mode', isNight);
 }
 setGreeting();
+// Cập nhật mỗi phút — tự chuyển khi sang 18h
+setInterval(setGreeting, 60000);
 
 // ─── FORMAT ──────────────────────────────────────────────────────────────────
 function fmt(n) {
@@ -1341,8 +1418,8 @@ function txnHTML(t) {
   const sign = t.type==='income' ? '+' : '-';
   const catTag = cat ? `<span class="cat-tag">${cat.name}</span>` : '';
   return `<div class="txn-wrap" id="wrap-${t.id}">
-    <div class="txn-bg-left">✏️ <span>Sửa</span></div>
-    <div class="txn-bg-right"><span>Xoá</span> 🗑️</div>
+    <div class="txn-bg-left"><span>Sửa</span></div>
+    <div class="txn-bg-right"><span>Xoá</span></div>
     <div class="txn-item" id="txn-${t.id}"
       ontouchstart="swipeStart(event,${t.id})"
       ontouchmove="swipeMove(event,${t.id})"
