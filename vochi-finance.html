@@ -15,33 +15,56 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 20px;
+  padding: 10px 16px 6px;
   font-weight: 700;
+  font-size: 14px;
 }
 .cal-btn {
   cursor: pointer;
-  padding: 4px 10px;
+  padding: 6px 12px;
+  background: var(--bg, #f2f6f3);
+  border-radius: 8px;
+  font-size: 16px;
+  user-select: none;
 }
 #calendar {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
-  padding: 12px 20px;
+  gap: 3px;
+  padding: 4px 8px 12px;
 }
 .day {
-  background: white;
-  border-radius: 10px;
-  padding: 8px;
+  background: var(--white);
+  border-radius: 8px;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
   cursor: pointer;
+  min-width: 0;
 }
 .day.active {
-  background: #4CAF82;
+  background: #2C4D9C;
   color: white;
+  font-weight: 800;
 }
 .day.has-data {
   border: 2px solid #4CAF82;
+}
+.day.today {
+  font-weight: 800;
+  color: var(--text);
+  border: 2.5px solid #EAF603;
+  box-shadow: 0 0 6px rgba(234,246,3,.4);
+}
+.day.today.active {
+  background: #2C4D9C;
+  color: #fff;
+  border: 2.5px solid #EAF603;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
@@ -138,7 +161,9 @@ html,body{
   cursor:pointer;display:flex;align-items:center;justify-content:center;
   font-size:19px;transition:all .2s;flex-shrink:0;
   box-shadow:0 4px 14px rgba(76,175,130,.4);
+  color:#fff;
 }
+#mic-btn svg{ width:24px;height:24px; }
 #mic-btn:active{transform:scale(.92);box-shadow:0 2px 8px rgba(76,175,130,.3)}
 #mic-btn.listening{
   background:linear-gradient(135deg,#f05a54,var(--red));
@@ -190,27 +215,33 @@ html,body{
   }
 }
 .nav-item{
-  flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
   padding:8px 4px 0;cursor:pointer;transition:all .2s;border:none;background:transparent;
 }
 .nav-icon{
-  width:40px;height:40px;border-radius:14px;
+  width:42px;height:42px;border-radius:14px;
   display:flex;align-items:center;justify-content:center;
-  font-size:18px;transition:all .25s cubic-bezier(.34,1.56,.64,1);
+  font-size:20px;transition:all .25s cubic-bezier(.34,1.56,.64,1);
+  color:var(--text3);
+  opacity:0.45;
 }
+.nav-icon svg{ width:24px;height:24px;transition:all .25s; }
 .nav-item.active .nav-icon{
-  background:linear-gradient(135deg,var(--mint-light),#d4f0e3);
-  transform:scale(1.08);
-  box-shadow:0 2px 8px rgba(76,175,130,.2);
+  background:#2C4D9C;
+  transform:scale(1.1);
+  box-shadow:0 4px 12px rgba(44,77,156,.4);
+  color:#fff;
+  opacity:1;
 }
 .nav-item:active .nav-icon{transform:scale(.92)}
 .nav-label{
-  font-size:10px;font-weight:700;color:var(--text3);
+  font-size:10px;font-weight:600;color:var(--text3);
   transition:all .2s;letter-spacing:.3px;
 }
 .nav-item.active .nav-label{
-  color:var(--mint);
-  font-weight:800;
+  color:#2C4D9C;
+  font-weight:900;
+  font-size:11px;
 }
 
 /* ── SHARED ── */
@@ -601,13 +632,20 @@ body.night-mode .cat-btn.selected{background:#2C4D9C;border-color:#2C4D9C;}
 body.night-mode .modal-input{background:#16203a;border-color:#2e3d62;color:#e8edf8;}
 body.night-mode .sheet{background:#222d4e;}
 body.night-mode #toast{background:#2C4D9C;}
-body.night-mode .nav-item.active .nav-icon{background:#1e2d54;}
+body.night-mode .nav-icon{color:#607090;}
+body.night-mode .nav-item.active .nav-icon{background:#2C4D9C;box-shadow:0 4px 12px rgba(44,77,156,.5);color:#fff;}
+body.night-mode .nav-item.active .nav-label{color:#89b4ff;}
 body.night-mode .monthly-bar-track,
 body.night-mode .cat-bar-track{background:#16203a;}
 body.night-mode .saving-progress{background:#16203a;}
 body.night-mode .bucket-btn,
 body.night-mode .goal-btn{background:#16203a;border-color:#2e3d62;color:#a0b0d0;}
 body.night-mode .txn-bg-left{background:linear-gradient(90deg,#c96800,#e67e00);}
+body.night-mode .day{background:#2a3a5e;color:#e8edf8;}
+body.night-mode .day.active{background:#2C4D9C;color:#fff;}
+body.night-mode .day.has-data{border-color:#4CAF82;}
+body.night-mode .day.today{border-color:#EAF603;box-shadow:0 0 6px rgba(234,246,3,.35);}
+body.night-mode #calendar-wrapper{background:#1e2848;border-color:#2e3d62;}
 body.night-mode .txn-bg-right{background:linear-gradient(90deg,#6a1a1a,#b03030);}
 body.night-mode #main{background:#1a2440;}
 /* Night indicator nhỏ ở góc */
@@ -669,7 +707,7 @@ body.night-mode #main{background:#1a2440;}
         </div>
 
         <!-- CALENDAR -->
-        <div id="calendar-wrapper" style="display:none;background:var(--bg);border-radius:var(--r16);margin-bottom:10px;border:1.5px solid var(--border);">
+        <div id="calendar-wrapper" style="display:none;background:var(--bg);border-radius:var(--r16);margin-bottom:10px;border:1.5px solid var(--border);overflow:hidden;">
           <div id="calendar-header"></div>
           <div id="calendar"></div>
         </div>
@@ -821,7 +859,9 @@ body.night-mode #main{background:#1a2440;}
     <div id="waveform-container"><div class="waveform"><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div></div></div>
     <div id="voice-status">Nhấn 🎤 để nói hoặc gõ lệnh bên dưới</div>
     <div class="voice-row">
-      <button id="mic-btn" onclick="toggleMic()">🎤</button>
+      <button id="mic-btn" onclick="toggleMic()"><svg width="24" height="24" viewBox="0 0 84 84" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M42 57.873C34.4685 57.873 28.3418 51.7463 28.3418 44.2148V22.0664C28.3418 14.535 34.4685 8.4082 42 8.4082C49.5315 8.4082 55.6582 14.535 55.6582 22.0664V44.2148C55.6582 51.7463 49.5315 57.873 42 57.873ZM69.3164 42.3691C69.3164 40.3298 67.6643 38.6777 65.625 38.6777C63.5857 38.6777 61.9336 40.3298 61.9336 42.3691C61.9336 53.3607 52.9915 62.3027 42 62.3027C31.0085 62.3027 22.0664 53.3607 22.0664 42.3691C22.0664 40.3298 20.4136 38.6777 18.375 38.6777C16.3364 38.6777 14.6836 40.3298 14.6836 42.3691C14.6836 56.1786 24.9869 67.6207 38.3086 69.4293V71.9006C38.3086 73.9399 39.9614 75.592 42 75.592C44.0393 75.592 45.6914 73.9399 45.6914 71.9006V69.4293C59.0138 67.6207 69.3164 56.1786 69.3164 42.3691Z" fill="white"/>
+</svg></button>
       <input id="voice-input-box" type="text" placeholder='"chi 40k ăn sáng"' autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();processInput();}">
       <button id="prompts-toggle-btn" onclick="togglePrompts()" title="Gợi ý nhanh">⌄</button>
       <button id="send-btn" onclick="processInput()">➤</button>
@@ -830,11 +870,24 @@ body.night-mode #main{background:#1a2440;}
 
   <!-- BOTTOM NAV -->
   <div id="bottom-nav">
-    <button class="nav-item active" id="nav-dashboard" onclick="showTab('dashboard')"><div class="nav-icon">🏠</div><div class="nav-label">Trang chủ</div></button>
-    <button class="nav-item" id="nav-transactions" onclick="showTab('transactions')"><div class="nav-icon">📋</div><div class="nav-label">Giao dịch</div></button>
-    <button class="nav-item" id="nav-stats" onclick="showTab('stats')"><div class="nav-icon">📊</div><div class="nav-label">Thống kê</div></button>
-    <button class="nav-item" id="nav-savings" onclick="showTab('savings')"><div class="nav-icon">🎯</div><div class="nav-label">Tiết kiệm</div></button>
-    <button class="nav-item" id="nav-settings" onclick="showTab('settings')"><div class="nav-icon">⚙️</div><div class="nav-label">Cài đặt</div></button>
+        <button class="nav-item active" id="nav-dashboard" onclick="showTab('dashboard')"><div class="nav-icon"><svg width="24" height="24" viewBox="0 0 84 84" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M81.7349 36.5359L81.7291 36.5302L47.4639 2.2662C46.0032 0.804727 44.0614 0 41.996 0C39.9305 0 37.9886 0.804234 36.5275 2.26554L2.27991 36.5121C2.26843 36.5236 2.25694 36.5357 2.24546 36.5474C-0.753931 39.5638 -0.748681 44.4581 2.26023 47.4671C3.63474 48.8424 5.45042 49.6389 7.39161 49.7223C7.47036 49.73 7.54993 49.7337 7.62999 49.7337H8.99565V74.9501C8.99565 79.9401 13.0555 84 18.0466 84H31.4522C32.811 84 33.9131 82.8983 33.9131 81.5391V61.7695C33.9131 59.4925 35.7654 57.6404 38.0424 57.6404H45.9494C48.2266 57.6404 50.0785 59.4927 50.0785 61.7695V81.5391C50.0785 82.8983 51.1802 84 52.5395 84H65.9452C70.9363 84 74.9962 79.9401 74.9962 74.9503V49.7339H76.2626C78.3275 49.7339 80.2693 48.9297 81.7311 47.4685C84.7433 44.4545 84.7445 39.5519 81.7349 36.5359Z" fill="white"/>
+</svg></div><div class="nav-label">Trang chủ</div></button>
+    <button class="nav-item" id="nav-transactions" onclick="showTab('transactions')"><div class="nav-icon"><svg width="24" height="24" viewBox="0 0 84 84" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M67.2656 1.44092V16.4064H82.2299L67.2656 1.44092Z" fill="white"/>
+<path d="M64.8047 21.3281C63.4456 21.3281 62.3438 20.2263 62.3438 18.8672V0H27.0703C22.9994 0 19.6875 3.31193 19.6875 7.38281V34.8943C20.4983 34.8208 21.3188 34.7812 22.1484 34.7812C30.5366 34.7812 38.0456 38.6164 43.0149 44.625H69.7266C71.0857 44.625 72.1875 45.7268 72.1875 47.0859C72.1875 48.445 71.0857 49.5469 69.7266 49.5469H46.2571C47.8294 52.615 48.7966 55.957 49.1057 59.3906H69.7266C71.0857 59.3906 72.1875 60.4925 72.1875 61.8516C72.1875 63.2107 71.0857 64.3125 69.7266 64.3125H49.1057C48.3697 72.44 44.0273 79.5418 37.6947 84H76.2891C80.3599 84 83.6719 80.6881 83.6719 76.6172V21.3281H64.8047ZM69.7266 34.7812H33.6328C32.2737 34.7812 31.1719 33.6794 31.1719 32.3203C31.1719 30.9612 32.2737 29.8594 33.6328 29.8594H69.7266C71.0857 29.8594 72.1875 30.9612 72.1875 32.3203C72.1875 33.6794 71.0857 34.7812 69.7266 34.7812Z" fill="white"/>
+<path d="M22.1484 39.7031C9.93579 39.7031 0 49.6389 0 61.8516C0 74.0642 9.93579 84 22.1484 84C34.3611 84 44.2969 74.0642 44.2969 61.8516C44.2969 49.6389 34.3611 39.7031 22.1484 39.7031ZM28.7109 64.3125H22.1484C20.7893 64.3125 19.6875 63.2107 19.6875 61.8516V52.0078C19.6875 50.6487 20.7893 49.5469 22.1484 49.5469C23.5075 49.5469 24.6094 50.6487 24.6094 52.0078V59.3906H28.7109C30.07 59.3906 31.1719 60.4925 31.1719 61.8516C31.1719 63.2107 30.07 64.3125 28.7109 64.3125Z" fill="white"/>
+</svg></div><div class="nav-label">Giao dịch</div></button>
+    <button class="nav-item" id="nav-stats" onclick="showTab('stats')"><div class="nav-icon"><svg width="24" height="24" viewBox="0 0 84 84" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M14.8235 42.0001C12.2026 42.0001 9.68894 43.0413 7.83564 44.8946C5.98234 46.7479 4.94116 49.2615 4.94116 51.8825V71.6472C4.94116 74.2681 5.98234 76.7817 7.83564 78.635C9.68894 80.4884 12.2026 81.5295 14.8235 81.5295C17.4445 81.5295 19.9581 80.4884 21.8114 78.635C23.6647 76.7817 24.7059 74.2681 24.7059 71.6472V51.8825C24.7059 49.2615 23.6647 46.7479 21.8114 44.8946C19.9581 43.0413 17.4445 42.0001 14.8235 42.0001ZM42 2.4707C39.379 2.4707 36.8654 3.51188 35.0121 5.36518C33.1588 7.21848 32.1176 9.73209 32.1176 12.3531V71.6472C32.1176 74.2681 33.1588 76.7817 35.0121 78.635C36.8654 80.4884 39.379 81.5295 42 81.5295C44.6209 81.5295 47.1346 80.4884 48.9879 78.635C50.8412 76.7817 51.8823 74.2681 51.8823 71.6472V12.3531C51.8823 9.73209 50.8412 7.21848 48.9879 5.36518C47.1346 3.51188 44.6209 2.4707 42 2.4707ZM69.1765 22.2354C66.5555 22.2354 64.0419 23.2766 62.1886 25.1299C60.3353 26.9832 59.2941 29.4968 59.2941 32.1178V71.6472C59.2941 74.2681 60.3353 76.7817 62.1886 78.635C64.0419 80.4884 66.5555 81.5295 69.1765 81.5295C71.7974 81.5295 74.311 80.4884 76.1643 78.635C78.0176 76.7817 79.0588 74.2681 79.0588 71.6472V32.1178C79.0588 29.4968 78.0176 26.9832 76.1643 25.1299C74.311 23.2766 71.7974 22.2354 69.1765 22.2354Z" fill="white"/>
+</svg></div><div class="nav-label">Thống kê</div></button>
+    <button class="nav-item" id="nav-savings" onclick="showTab('savings')"><div class="nav-icon"><svg width="24" height="24" viewBox="0 0 84 84" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M27.16 42.2975C38.8325 42.2975 48.3 32.83 48.3 21.1575C48.3 9.485 38.8325 0 27.16 0C15.4875 0 6.02002 9.4675 6.02002 21.14C6.02002 32.8125 15.4875 42.2975 27.16 42.2975ZM19.775 29.505C19.9675 28.805 20.16 28.1225 20.37 27.4225C20.615 26.6175 20.8425 26.53 21.5775 26.915C22.8375 27.5625 24.1675 27.93 25.5675 28.105C26.46 28.21 27.3525 28.1225 28.175 27.755C29.7325 27.0725 29.9775 25.27 28.665 24.185C28.21 23.8175 27.7025 23.5375 27.1775 23.31C25.8125 22.715 24.395 22.26 23.1 21.49C21.0175 20.2475 19.6875 18.515 19.845 15.9775C20.02 13.1075 21.6475 11.305 24.2725 10.36C25.3575 9.9575 25.3575 9.975 25.375 8.8375V7.6825C25.3925 6.825 25.55 6.685 26.39 6.65H27.1775C28.9975 6.65 28.9975 6.65 28.9975 8.47C28.9975 9.7475 28.9975 9.765 30.275 9.9575C31.255 10.115 32.1825 10.395 33.0925 10.7975C33.6 11.025 33.775 11.375 33.635 11.9C33.4075 12.6875 33.1975 13.475 32.935 14.245C32.69 14.98 32.4625 15.085 31.7625 14.7525C30.345 14.07 28.8575 13.7725 27.2825 13.86C26.8625 13.8775 26.4775 13.93 26.0925 14.105C24.745 14.7 24.5175 16.1875 25.6725 17.115C26.25 17.5875 26.915 17.92 27.615 18.2C28.805 18.69 30.0125 19.18 31.1675 19.81C34.79 21.8225 35.77 26.3725 33.215 29.47C32.2875 30.59 31.0975 31.3425 29.68 31.7275C29.0675 31.9025 28.7875 32.2175 28.8225 32.8475C28.8575 33.4775 28.8225 34.09 28.8225 34.72C28.8225 35.28 28.5425 35.5775 27.9825 35.595C27.3175 35.6125 26.635 35.6125 25.97 35.595C25.375 35.5775 25.095 35.245 25.095 34.6675C25.095 34.2125 25.095 33.7575 25.0775 33.3025C25.06 32.305 25.0425 32.2525 24.0625 32.095C22.82 31.9025 21.6125 31.6225 20.475 31.0625C19.6175 30.66 19.53 30.4325 19.775 29.505Z" fill="white"/>
+<path d="M74.585 44.0649H72.1175C70.49 39.0774 67.305 34.6499 63.0525 31.2199C63.0525 31.0624 63.0175 30.8874 62.9825 30.7299C62.09 27.5974 63.1925 24.7449 64.47 22.6974C65.3625 21.2624 64.2075 19.4249 62.5275 19.6349C58.765 20.1074 56.175 21.4899 54.39 23.0474C53.165 24.1149 52.29 25.5499 51.905 27.1424C49.21 38.3074 39.1475 46.6199 27.16 46.6199C21.3325 46.6199 15.9775 44.6599 11.69 41.3699C10.2025 44.5899 9.39752 48.1074 9.39752 51.7999C9.39752 53.7949 9.64252 55.7374 10.0975 57.6099C10.0975 57.6099 10.0975 57.6449 10.115 57.6974C10.5875 59.6399 11.305 61.5124 12.215 63.2799C13.4225 65.8874 15.1725 68.9324 17.5875 71.3999C21.07 74.9874 21.665 79.4324 21.7525 81.3574V82.3024C21.8225 83.2474 22.61 83.9999 23.5725 83.9999H34.6325C35.63 83.9999 36.4525 83.1949 36.4525 82.1799V79.4499C38.0625 79.6599 39.7075 79.7824 41.37 79.7824C42.6825 79.7824 43.96 79.7124 45.2375 79.5724V82.1799C45.2375 83.1774 46.0425 83.9999 47.0575 83.9999H58.1525C59.15 83.9999 59.9725 83.1949 59.9725 82.1799V79.4499C59.99 78.5399 60.305 74.9174 63.735 71.8199L64.1025 71.5049C64.1375 71.4699 64.1725 71.4524 64.2075 71.4174C68.0225 68.0224 70.84 63.7874 72.2925 59.0624H74.62C76.475 59.0624 77.98 57.5574 77.98 55.7024V47.4249C77.945 45.5699 76.44 44.0649 74.585 44.0649ZM60.7425 44.6599C59.22 44.6599 57.995 43.4349 57.995 41.9124C57.995 40.3899 59.22 39.1649 60.7425 39.1649C62.265 39.1649 63.49 40.3899 63.49 41.9124C63.49 43.4349 62.265 44.6599 60.7425 44.6599Z" fill="white"/>
+</svg></div><div class="nav-label">Tiết kiệm</div></button>
+    <button class="nav-item" id="nav-settings" onclick="showTab('settings')"><div class="nav-icon"><svg width="24" height="24" viewBox="0 0 72 82" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M68.5652 48.0577C66.0996 46.5385 64.5683 43.7082 64.5683 40.6681C64.5683 37.6295 66.0994 34.7993 68.5579 33.2815C71.0812 31.73 72.1307 28.5062 71.0524 25.6167C69.7008 21.9668 67.8606 18.5578 65.5963 15.4829C63.792 13.0348 60.6578 12.3936 58.1347 13.9551C55.6763 15.4829 52.6139 15.4875 50.1483 13.9666C47.6898 12.4458 46.1659 9.61094 46.1731 6.56545C46.1731 3.4499 44.0884 0.864275 41.2059 0.418353C37.5775 -0.143273 33.8922 -0.139405 30.2649 0.429838C27.3895 0.878877 25.3049 3.46303 25.312 6.57234C25.312 9.61406 23.7879 12.4473 21.3295 13.9666C18.8638 15.4859 15.8087 15.4827 13.3432 13.9566C10.8201 12.3951 7.68586 13.0394 5.88154 15.4875C4.75164 17.0239 3.72586 18.6447 2.81207 20.3375C1.8991 22.0283 1.10117 23.8005 0.425487 25.6019C-0.660049 28.496 0.389594 31.7244 2.91269 33.2799C5.37843 34.7977 6.90956 37.6294 6.90956 40.668C6.90956 43.7066 5.37843 46.536 2.9199 48.056C0.396803 49.6077 -0.652687 52.8299 0.425487 55.7186C1.7747 59.362 3.61266 62.776 5.88154 65.853C7.68586 68.3012 10.8201 68.9423 13.3432 67.3808C15.8017 65.853 18.864 65.8499 21.3295 67.3693C23.7879 68.8902 25.312 71.725 25.312 74.7705C25.3048 77.8852 27.3965 80.4708 30.272 80.9177C32.0693 81.1961 33.8831 81.3358 35.6992 81.3359C37.5396 81.3359 39.3798 81.1929 41.2128 80.9061C44.0882 80.4562 46.1728 77.8744 46.1728 74.7651C46.1656 71.7219 47.6895 68.8885 50.148 67.3693C52.6136 65.8501 55.6688 65.8532 58.1344 67.3793C60.6575 68.9409 63.7917 68.2981 65.596 65.8484C66.7252 64.3121 67.751 62.6918 68.6655 60.9999C69.5712 59.3092 70.3836 57.5369 71.0521 55.734C72.1379 52.8399 71.0884 49.6107 68.5652 48.0577ZM45.5189 46.7091C44.0164 49.5032 41.5795 51.503 38.6611 52.3381C35.7498 53.173 32.7018 52.7448 30.0924 51.1301C24.701 47.7993 22.8464 40.3974 25.959 34.627C28.0437 30.7565 31.8536 28.5899 35.7569 28.5899C37.6762 28.5899 39.61 29.1096 41.3855 30.206C46.7768 33.536 48.6314 40.9401 45.5189 46.7091Z" fill="white"/>
+</svg></div><div class="nav-label">Cài đặt</div></button>
   </div>
 
   <!-- OVERLAY -->
@@ -990,7 +1043,7 @@ function renderCalendar() {
     const date = new Date(year, month, d);
     const isToday = date.toDateString() === today.toDateString();
     const hasData = D.txns.some(t => new Date(t.ts).toDateString() === date.toDateString());
-    html += `<div class="day${hasData?' has-data':''}${isToday?' active':''}" onclick="filterByDate(new Date(${year},${month},${d}))">${d}</div>`;
+    html += `<div class="day${hasData?' has-data':''}${isToday?' today':''}" onclick="filterByDate(new Date(${year},${month},${d}))">${d}</div>`;
   }
 
   container.innerHTML = html;
