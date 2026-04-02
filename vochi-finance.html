@@ -620,49 +620,6 @@ body.night-mode #main{background:#1a2440;}
 
 
 
-/* ── NUMPAD NGÂN HÀNG ── */
-.bank-numpad{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:6px;
-  margin-top:10px;
-  background:var(--bg);
-  border-radius:var(--r16);
-  padding:8px;
-}
-.bank-numpad-display{
-  display:flex;align-items:center;justify-content:space-between;
-  background:var(--white);border:1.5px solid var(--border);
-  border-radius:var(--r12);padding:10px 16px;
-  margin-top:8px;margin-bottom:2px;
-}
-.bank-numpad-display-val{
-  font-family:'Nunito',sans-serif;font-size:22px;font-weight:800;
-  color:var(--dark);letter-spacing:-.5px;
-}
-.bank-numpad-display-hint{
-  font-size:11px;color:var(--text3);font-weight:500;
-}
-.np-btn{
-  height:58px;border-radius:12px;border:none;
-  background:var(--white);
-  font-family:'Nunito',sans-serif;font-size:20px;font-weight:600;
-  color:var(--dark);cursor:pointer;
-  box-shadow:0 1px 4px rgba(0,0,0,.08);
-  transition:all .08s;
-  -webkit-tap-highlight-color:transparent;
-}
-.np-btn:active{ background:#e8e8e8;transform:scale(.95); }
-.np-btn.action{
-  background:#d1d5db;color:#374151;font-size:14px;font-weight:700;
-}
-.np-btn.action:active{ background:#b0b5bc; }
-.np-btn.np-done{
-  background:var(--mint);color:#fff;font-size:14px;font-weight:800;
-  box-shadow:0 2px 8px rgba(76,175,130,.4);
-}
-.np-btn.np-done:active{ background:var(--mint2); }
-
 </style>
 </head>
 <body>
@@ -1587,7 +1544,7 @@ function showEditTxnSheet(id) {
     <div class="sheet-title">Sửa giao dịch</div>
     <div class="sheet-sub">${fmtDate(t.ts)}</div>
     <input id="et-desc" class="modal-input" placeholder="Mô tả" value="${htmlEsc(t.desc)}">
-    ${bankNumpadHTML(t.amount)}
+    <input id="et-amt" class="modal-input" type="text" inputmode="numeric" placeholder="Số tiền (₫)" value="${t.amount}">
     ${t.type === 'expense' ? `
     <div style="margin-bottom:10px;font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.5px;text-transform:uppercase">Danh mục</div>
     <div class="cat-grid">${D.cats.map(c => `<div class="cat-btn${c.id===(t.cat||8)?' selected':''}" id="et-cb${c.id}" onclick="pickEditCat(${c.id})"><span class="cat-emoji">${c.emoji}</span><span class="cat-name">${htmlEsc(c.name)}</span></div>`).join('')}</div>
@@ -1616,8 +1573,6 @@ function saveEditTxn(id) {
   const descVal = (document.getElementById('et-desc') || {}).value;
   const amtEl2  = document.getElementById('et-amt');
   const amtVal  = amtEl2 ? amtEl2.value.replace(/[^0-9]/g,'') : '';
-  // Sync numpad value vào hidden input trước khi đọc
-  if (typeof _npRaw !== 'undefined' && _npRaw) amtEl2 && (amtEl2.value = _npRaw);
   const body    = document.getElementById('sheet-body');
   const catVal  = body ? body.dataset.editCat : null;
 
@@ -1630,8 +1585,8 @@ function saveEditTxn(id) {
 
   // Cập nhật các trường — giữ giá trị cũ nếu input rỗng
   const newDesc   = (descVal !== undefined && descVal.trim() !== '') ? descVal.trim() : t.desc;
-  const newAmount = (amtVal && amtVal.trim() !== '' && amtVal !== '0')
-                    ? (parseInt(amtVal, 10) || t.amount) : t.amount;
+  const newAmount = (amtVal && amtVal.trim() !== '')
+                    ? (parseAmt(amtVal) || t.amount) : t.amount;
   const newCat    = (catVal  !== undefined && catVal !== '' && !isNaN(parseInt(catVal)))
                     ? parseInt(catVal) : t.cat;
 
@@ -1750,72 +1705,6 @@ function formatAmountInput(input) {
 }
 
 
-// ── NUMPAD NGÂN HÀNG ──────────────────────────────────────────────────────────
-let _npRaw = ''; // chữ số thuần, không dấu chấm
-
-function npFmt(raw) {
-  if (!raw) return '0';
-  const n = parseInt(raw, 10);
-  return isNaN(n) ? '0' : n.toLocaleString('vi-VN');
-}
-
-function npKey(k) {
-  if (k === 'del') {
-    _npRaw = _npRaw.slice(0, -1);
-  } else if (k === '000') {
-    if (_npRaw === '' || _npRaw === '0') return;
-    _npRaw += '000';
-  } else if (k === '.') {
-    // Bỏ qua dấu chấm vì VND không có số lẻ
-    return;
-  } else {
-    if (_npRaw === '0') _npRaw = '';
-    _npRaw += k;
-  }
-  if (_npRaw.length > 13) _npRaw = _npRaw.slice(0, 13);
-  const el = document.getElementById('np-display-val');
-  if (el) el.textContent = npFmt(_npRaw);
-}
-
-function npDone() {
-  // Ghi vào hidden input
-  const hidden = document.getElementById('et-amt');
-  if (hidden) hidden.value = _npRaw || '0';
-  // Cập nhật display nếu còn
-  const el = document.getElementById('np-display-val');
-  if (el) el.textContent = npFmt(_npRaw);
-}
-
-function bankNumpadHTML(initVal) {
-  _npRaw = initVal ? String(parseInt(String(initVal)) || '') : '';
-  return `
-    <input id="et-amt" type="hidden" value="${_npRaw}">
-    <div class="bank-numpad-display">
-      <div class="bank-numpad-display-val" id="np-display-val">${npFmt(_npRaw)}</div>
-      <div class="bank-numpad-display-hint">₫ VND</div>
-    </div>
-    <div class="bank-numpad">
-      <button class="np-btn" onclick="npKey('1')">1</button>
-      <button class="np-btn" onclick="npKey('2')">2</button>
-      <button class="np-btn" onclick="npKey('3')">3</button>
-      <button class="np-btn action" onclick="npKey('del')">⌫</button>
-
-      <button class="np-btn" onclick="npKey('4')">4</button>
-      <button class="np-btn" onclick="npKey('5')">5</button>
-      <button class="np-btn" onclick="npKey('6')">6</button>
-      <button class="np-btn action np-done" onclick="npDone()" style="background:transparent;color:var(--text3);box-shadow:none;font-size:13px"></button>
-
-      <button class="np-btn" onclick="npKey('7')">7</button>
-      <button class="np-btn" onclick="npKey('8')">8</button>
-      <button class="np-btn" onclick="npKey('9')">9</button>
-      <button class="np-btn action np-done" onclick="npDone()" style="grid-row:span 1">Tiếp</button>
-
-      <button class="np-btn" onclick="npKey('000')" style="font-size:16px;font-weight:700">000</button>
-      <button class="np-btn" onclick="npKey('0')">0</button>
-      <button class="np-btn" onclick="npKey('.')">.</button>
-    </div>
-  `;
-}
 
 // ── QUICK PROMPTS ──────────────────────────────────────────────────────────
 let _promptsOpen = false;
