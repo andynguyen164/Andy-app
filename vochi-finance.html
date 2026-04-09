@@ -1532,11 +1532,11 @@ function addTxn(data) {
   renderAllTxns();
 }
 
-function getCat(id) { return D.cats.find(c => c.id===id) || {name:'Khác', emoji:'📌'}; }
+function getCat(id) { return D.cats.find(c => c.id===id) || {name:'Khác', emoji:''}; }
 
 function txnHTML(t) {
   const cat = t.cat ? getCat(t.cat) : null;
-  const icon = t.type==='income' ? '💚' : t.type==='saving' ? '🟡' : (cat ? cat.emoji : '📌');
+  const icon = t.type==='income' ? '💚' : t.type==='saving' ? '🟡' : (cat && cat.emoji ? cat.emoji : '💳');
   const iconBg = t.type==='income' ? 'background:var(--mint-light)' : t.type==='saving' ? 'background:var(--amber-light)' : 'background:var(--bg)';
   const color = t.type==='income' ? 'var(--mint2)' : t.type==='saving' ? 'var(--amber)' : 'var(--red)';
   const sign = t.type==='income' ? '+' : '-';
@@ -2190,7 +2190,8 @@ function saveKeywords() {
 }
 function addCategory() {
   const name = document.getElementById('new-cat-name').value.trim();
-  const emoji = document.getElementById('new-cat-emoji').value.trim() || '📌';
+  const rawEmoji = document.getElementById('new-cat-emoji').value.replace(/[\u200B-\u200D\uFEFF]/g,'').trim();
+  const emoji = rawEmoji; // không có fallback — để rỗng nếu user không nhập
   if (!name) { toast('Nhập tên danh mục!'); return; }
   D.cats.push({id: D.nextId++, name, emoji});
   document.getElementById('new-cat-name').value = '';
